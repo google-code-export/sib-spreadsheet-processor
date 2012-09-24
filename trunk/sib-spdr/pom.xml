@@ -15,7 +15,7 @@
 	</properties>
 
 	<build>
-		<finalName>dwc-form</finalName>
+		<finalName>sib-spdr</finalName>
 		<defaultGoal>jetty:run</defaultGoal>
 		<plugins>
 			<plugin>
