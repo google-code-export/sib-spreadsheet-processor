@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+
+<struts>
+	
+    <package name="sib-spreadsheet-processor-default" extends="struts-default" namespace="/">
+        <result-types>
+			<result-type name="freemarker" class="org.apache.struts2.views.freemarker.FreemarkerResult" default="true"/>
+		</result-types>
+		
+        <interceptors>
+            
+            <!-- custom interceptor to preserve action messages across redirects -->
+			<interceptor name="keepRedirectMessages" class="net.sibcolombia.sibsp.struts2.RedirectMessageInterceptor"/>
+			<interceptor name="protectPrivateResource" class="net.sibcolombia.sibsp.struts2.PrivateResourceInterceptor"/>
+			
+			<!-- interceptor changing the current resource in the session if a "r" parameter is supplied -->
+			<interceptor name="resourceSession" class="net.sibcolombia.sibsp.struts2.ResourceSessionInterceptor"/>
+            
+            <!-- interceptor to redirect to the basic setup pages in case basic configuration is missing -->
+            <interceptor name="setupAndCancel" class="net.sibcolombia.sibsp.struts2.ConfigurationAndCancelInterceptor"/>
+            
+            <interceptor-stack name="sibspStack">
+                <!-- <interceptor-ref name="keepRedirectMessages"/> -->
+				<interceptor-ref name="i18nStack"/>
+				<interceptor-ref name="validation">
+				    <param name="excludeMethods">input,back,cancel,list</param>
+				</interceptor-ref>
+				<interceptor-ref name="workflow"/>
+			</interceptor-stack>
+            
+            <!-- stack to be used as the default for the public portal package -->
+			<interceptor-stack name="portalStack">
+			    <!-- <interceptor-ref name="resourceSession"/> -->
+				<interceptor-ref name="setupAndCancel"/>
+				<!-- <interceptor-ref name="protectPrivateResource"/> -->
+				<interceptor-ref name="sibspStack"/>
+			</interceptor-stack>
+		
+		</interceptors>
+		
+        <default-interceptor-ref name="portalStack"/>
+        
+        <default-class-ref class="net.sibcolombia.sibsp.action.BaseAction"/>
+        
+        <global-results>
+        	<!-- Not found -->
+            <result name="404">
+				<param name="location">/WEB-INF/pages/error/404.ftl</param>
+			</result>
+			<!-- Unauthorized -->
+			<result name="401">
+				<param name="location">/WEB-INF/pages/error/401.ftl</param>
+			</result>
+			<!-- Not Modified -->
+			<result name="304" type="httpheader">
+				<param name="status">304</param>
+			</result>
+			<result name="error">
+				<param name="location">/WEB-INF/pages/error/error.ftl</param>
+			</result>
+			<result name="configurationIncomplete" type="redirect">/configure.do</result>
+		</global-results>
+			
+		<action name="configure" class="net.sibcolombia.sibsp.configuration.ConfigurationAction" method="setup">
+			<result name="input">/WEB-INF/pages/administration/configure.ftl</result>
+			<result type="redirect">/home/</result>
+		</action>
+		
+	</package>
+	
+    <include file="struts-site.xml"/>
+</struts>
