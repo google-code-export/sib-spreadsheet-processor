@@ -27,13 +27,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import net.sibcolombia.sibsp.model.Resource;
+
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import net.sibcolombia.sibsp.action.BaseAction;
 import net.sibcolombia.sibsp.configuration.ApplicationConfig;
 import net.sibcolombia.sibsp.configuration.DataDir;
 import net.sibcolombia.sibsp.interfaces.ResourceManager;
-import net.sibcolombia.sibsp.model.Resource;
 import net.sibcolombia.sibsp.struts2.SimpleTextProvider;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
@@ -64,6 +65,9 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
       // Process template with metadata only workbook
       this.resource = createFromMetadataOnlySpreadsheet(sourceFile, fileName, actionLogger);
       saveEml(fileName);
+    } else if (isBasicOcurrenceOnly(onlyFileName)) {
+      // Process template with metadata and basic data of ocurrence file
+
     } else {
       // Process template with metadata and taxonomy file
     }
@@ -101,6 +105,14 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
     resource.setEml(eml);
 
     return resource;
+  }
+
+  private boolean isBasicOcurrenceOnly(String onlyFileName) {
+    if (onlyFileName.equalsIgnoreCase("DwC_min_elements_template_version_1.0")) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   private boolean isEmlOnly(String onlyFileName) {

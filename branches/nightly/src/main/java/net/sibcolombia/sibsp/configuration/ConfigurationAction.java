@@ -55,10 +55,10 @@ public class ConfigurationAction extends BaseAction {
   @Override
   public String getRootURL() {
     // try to detect default values if not yet configured
-    if (StringUtils.trimToNull(config.getRootUrl()) == null) {
+    if (StringUtils.trimToNull(config.getRootURL()) == null) {
       rootURL = findRootURL();
     } else {
-      rootURL = config.getRootUrl();
+      rootURL = config.getRootURL();
     }
     return rootURL;
   }

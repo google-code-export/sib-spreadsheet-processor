@@ -24,8 +24,8 @@ public class ApplicationConfig {
     PRODUCTION, DEVELOPMENT
   }
 
-  private static final String PROPERTIES_FILE = "application.properties";
   protected static final String DATADIR_PROPFILE = "sibsp.properties";
+  private static final String CLASSPATH_PROPFILE = "application.properties";
   public static final String ROOTURL = "sibsp.rootURL";
   public static final String PROXY = "proxy";
   private DataDir dataDir;
@@ -45,7 +45,7 @@ public class ApplicationConfig {
     return properties.getProperty(key);
   }
 
-  public String getRootUrl() {
+  public String getRootURL() {
     String root = properties.getProperty(ROOTURL);
     while (root != null && root.endsWith("/")) {
       root = root.substring(0, root.length() - 1);
@@ -55,7 +55,7 @@ public class ApplicationConfig {
 
   protected void loadConfigurationSettings() {
     InputStreamUtils streamUtils = new InputStreamUtils();
-    InputStream configStream = streamUtils.classpathStream(PROPERTIES_FILE);
+    InputStream configStream = streamUtils.classpathStream(CLASSPATH_PROPFILE);
     try {
       Properties properties = new Properties();
       if (configStream == null) {
@@ -66,7 +66,7 @@ public class ApplicationConfig {
       }
       if (dataDir.dataDir != null && dataDir.dataDir.exists()) {
         // Read configuration data
-        File userConfigurationFile = new File(dataDir.dataDir, "config/" + PROPERTIES_FILE);
+        File userConfigurationFile = new File(dataDir.dataDir, "config/" + DATADIR_PROPFILE);
         if (userConfigurationFile.exists()) {
           try {
             properties.load(new FileInputStream(userConfigurationFile));
