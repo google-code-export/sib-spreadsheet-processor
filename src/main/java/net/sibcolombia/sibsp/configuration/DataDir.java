@@ -8,7 +8,7 @@ import java.io.InputStream;
 import java.util.UUID;
 
 import com.google.inject.Singleton;
-import com.sun.istack.internal.Nullable;
+import javax.annotation.Nullable;
 import net.sibcolombia.sibsp.service.InvalidConfigException;
 import net.sibcolombia.sibsp.service.InvalidConfigException.TYPE;
 import org.apache.commons.io.FileUtils;
