@@ -24,8 +24,10 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
@@ -46,6 +48,8 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 public class ResourceManagerImpl extends BaseManager implements ResourceManager {
 
   private Resource resource;
+  // key=shortname in lower case, value=resource
+  private final Map<String, Resource> resources = new HashMap<String, Resource>();
 
   // create instance of BaseAction - allows class to retrieve i18n terms via getText()
   private final BaseAction baseAction;
@@ -120,6 +124,11 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
     } else {
       return false;
     }
+  }
+
+  @Override
+  public List<Resource> list() {
+    return new ArrayList<Resource>(resources.values());
   }
 
   private void readAdditionalMetadata(Eml eml, Workbook template) throws InvalidFormatException {

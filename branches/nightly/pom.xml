@@ -27,6 +27,10 @@
         
         <junit.version>4.10</junit.version>
         <gbif-metadata-profile.version>1.1-SNAPSHOT</gbif-metadata-profile.version>
+        <gbif-common-api.version>0.2</gbif-common-api.version>
+        <gbif-common.version>0.8-SNAPSHOT</gbif-common.version>
+        <dwca-reader.version>1.12-SNAPSHOT</dwca-reader.version>
+        <dwc-api.version>1.1-SNAPSHOT</dwc-api.version>
         <struts2.version>2.3.4.1</struts2.version>
         <log4j.version>1.2.17</log4j.version>
         <poi.version>3.8</poi.version>
@@ -132,13 +136,33 @@
     	<!-- GBIF libraries -->
     	<dependency>
     		<groupId>org.gbif</groupId>
-    		<artifactId>gbif-httputils</artifactId>
-    		<version>${httputils.version}</version>
+    		<artifactId>dwca-reader</artifactId>
+    		<version>${dwca-reader.version}</version>
     	</dependency>
     	<dependency>
     		<groupId>org.gbif</groupId>
     		<artifactId>gbif-metadata-profile</artifactId>
     		<version>${gbif-metadata-profile.version}</version>
+    	</dependency>
+    	<dependency>
+    		<groupId>org.gbif</groupId>
+    		<artifactId>dwc-api</artifactId>
+    		<version>${dwc-api.version}</version>
+    	</dependency>
+    	<dependency>
+    		<groupId>org.gbif</groupId>
+    		<artifactId>gbif-common</artifactId>
+    		<version>${gbif-common.version}</version>
+    	</dependency>
+    	<dependency>
+    		<groupId>org.gbif</groupId>
+    		<artifactId>gbif-httputils</artifactId>
+    		<version>${httputils.version}</version>
+    	</dependency>
+    	<dependency>
+    		<groupId>org.gbif</groupId>
+    		<artifactId>gbif-common-api</artifactId>
+    		<version>${gbif-common-api.version}</version>
     	</dependency>
         
 		<!-- Struts2 -->
