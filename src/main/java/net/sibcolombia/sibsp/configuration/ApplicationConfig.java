@@ -31,6 +31,7 @@ public class ApplicationConfig {
   private DataDir dataDir;
   private Properties properties = new Properties();
   private static final Logger LOG = Logger.getLogger(ApplicationConfig.class);
+  private REGISTRY_TYPE type;
 
   private ApplicationConfig() {
   }
@@ -47,6 +48,17 @@ public class ApplicationConfig {
 
   public String getProperty(String key) {
     return properties.getProperty(key);
+  }
+
+  public REGISTRY_TYPE getRegistryType() {
+    return type;
+  }
+
+  public String getRegistryUrl() {
+    if (REGISTRY_TYPE.PRODUCTION == type) {
+      return getProperty("dev.registry.url");
+    }
+    return getProperty("dev.registrydev.url");
   }
 
   public String getRootURL() {

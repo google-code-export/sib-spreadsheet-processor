@@ -14,10 +14,13 @@
 		<div class="span9">
 			<div class="content content-full-witdh">    	
 				<div class="content-inner">
-    	
+				
+					<h2>[@s.text name="admin.config.extension.coreTypes"/]</h2>
+					<p>[@s.text name="admin.config.extension.no.coreTypes.installed.help"/]</p>
 					
-	
-    
+					[#assign count=0]
+					
+				
 				</div>	
 			</div>
 		</div>

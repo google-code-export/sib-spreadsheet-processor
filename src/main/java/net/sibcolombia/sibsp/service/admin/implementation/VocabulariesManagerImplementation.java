@@ -75,6 +75,20 @@ public class VocabulariesManagerImplementation extends BaseManager implements Vo
     return true;
   }
 
+  @Override
+  public Vocabulary get(URI uriObject) {
+    if (!vocabularies.containsKey(uriObject)) {
+      try {
+        install(uriObject);
+      } catch (InvalidConfigException e) {
+        log.error(e);
+      } catch (IOException e) {
+        log.error(e);
+      }
+    }
+    return vocabularies.get(uriObject);
+  }
+
   private File getVocabFile(URI uriObject) {
     String filename = uriObject.toString().replaceAll("[/.:]+", "_") + VOCAB_FILE_SUFFIX;
     return dataDir.configFile(CONFIG_FOLDER + "/" + filename);

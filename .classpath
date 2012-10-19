@@ -60,5 +60,9 @@
 	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/jsr305-1.3.9.jar"/>
 	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/gson-2.2.2.jar"/>
 	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/xstream-1.4.3.jar"/>
+	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/dwc-api-1.1-20120816.144252-9.jar"/>
+	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/xmlpull-1.1.3.1.jar"/>
+	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/xpp3_min-1.1.4c.jar"/>
+	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/dwca-reader-1.12-20120831.135808-21.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

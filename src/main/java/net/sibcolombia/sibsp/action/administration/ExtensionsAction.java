@@ -1,10 +1,13 @@
 package net.sibcolombia.sibsp.action.administration;
 
+import java.util.List;
 import java.util.Map.Entry;
 
 import com.google.inject.Inject;
 import net.sibcolombia.sibsp.action.POSTAction;
 import net.sibcolombia.sibsp.configuration.ApplicationConfig;
+import net.sibcolombia.sibsp.model.Extension;
+import net.sibcolombia.sibsp.service.admin.ExtensionManager;
 import net.sibcolombia.sibsp.service.admin.VocabulariesManager;
 import net.sibcolombia.sibsp.service.admin.implementation.VocabulariesManagerImplementation.UpdateResult;
 import net.sibcolombia.sibsp.struts2.SimpleTextProvider;
@@ -18,8 +21,11 @@ public class ExtensionsAction extends POSTAction {
   // logging
   private static final Logger log = Logger.getLogger(ExtensionsAction.class);
 
+  private ExtensionManager extensionManager;
+
   private final Boolean updateVocabs = false;
   private VocabulariesManager vocabularyManager;
+  private List<Extension> extensions;
 
   @Inject
   public ExtensionsAction(SimpleTextProvider textProvider, ApplicationConfig cfg) {
@@ -43,7 +49,7 @@ public class ExtensionsAction extends POSTAction {
     }
 
     // retrieve all extensions
-    // extensions = extensionManager.list();
+    extensions = extensionManager.list();
     // load any new extensions
     // loadRegisteredExtensions();
 

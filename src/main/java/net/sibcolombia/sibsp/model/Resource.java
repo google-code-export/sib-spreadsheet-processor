@@ -2,17 +2,21 @@ package net.sibcolombia.sibsp.model;
 
 import org.gbif.metadata.eml.Eml;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.common.base.Strings;
-import org.apache.log4j.Logger;
 
 
 public class Resource {
 
-  private static Logger log = Logger.getLogger(Resource.class);
   private Eml eml;
   private String fileName;
   private String coreType;
   private String subtype;
+  private String shortname; // unique
+
+  private final List<ExtensionMapping> mappings = new ArrayList<ExtensionMapping>();
 
 
   public String getCoreType() {
@@ -26,6 +30,30 @@ public class Resource {
 
   public String getFileName() {
     return fileName;
+  }
+
+  /**
+   * Get the list of mappings for the requested extension rowtype.
+   * The order of mappings in the list is guaranteed to be stable and the same as the underlying original mappings
+   * list.
+   * 
+   * @param rowType identifying the extension
+   * @return the list of mappings for the requested extension rowtype
+   */
+  public List<ExtensionMapping> getMappings(String rowType) {
+    List<ExtensionMapping> maps = new ArrayList<ExtensionMapping>();
+    if (rowType != null) {
+      for (ExtensionMapping m : mappings) {
+        if (rowType.equals(m.getExtension().getRowType())) {
+          maps.add(m);
+        }
+      }
+    }
+    return maps;
+  }
+
+  public String getShortname() {
+    return shortname;
   }
 
   public String getSubtype() {
