@@ -97,6 +97,7 @@ public class ConfigurationManagerImplementation extends BaseManager implements C
   /**
    * Returns the local host name.
    */
+  @Override
   public String getHostName() {
     String hostName = "";
     try {

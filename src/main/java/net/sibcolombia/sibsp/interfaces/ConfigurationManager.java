@@ -15,6 +15,8 @@ public interface ConfigurationManager {
    */
   boolean configurationComplete();
 
+  String getHostName();
+
   /**
    * Persists the main SiB-SP AppConfig configuration which can be modified for simple properties independently of this
    * manager as its a singleton.

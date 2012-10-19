@@ -46,7 +46,11 @@
           <a class="brand" href="/sib-spreadsheet-processor"><img src="/sib-spreadsheet-processor/images/logo_sib_50px.png" alt="Logo SIB Colombia">Spreadsheet Processor</a>
           <div class="nav-collapse collapse">
             <ul class="nav pull-right">
-              <li class="active"><a href="/sib-spreadsheet-processor">[@s.text name="sibsp.application.home"/]</a></li>
+              <li><a href="${rootURL}">[@s.text name="sibsp.application.home"/]</a></li>
+              <li class="active"><a href="${rootURL}/administration/">[@s.text name="sibsp.application.configuration"/]</a></li>
+              <li><a href="#about">[@s.text name="sibsp.application.about"/]</a></li>
+              <li><a href="#contact">[@s.text name="sibsp.application.privacy"/]</a></li>
+              <li><a href="#contact">[@s.text name="sibsp.application.contact"/]</a></li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>

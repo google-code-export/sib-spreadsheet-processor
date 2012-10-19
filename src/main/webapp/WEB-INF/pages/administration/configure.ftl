@@ -51,4 +51,4 @@
 	
 	</div>
 </div> <!-- /container -->
-[#include "/WEB-INF/pages/include/footer.ftl"]
+[#include "/WEB-INF/pages/include/footer_configuration.ftl"]

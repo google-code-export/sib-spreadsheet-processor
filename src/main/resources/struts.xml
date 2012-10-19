@@ -38,6 +38,13 @@
 				<!-- <interceptor-ref name="protectPrivateResource"/> -->
 				<interceptor-ref name="sibspStack"/>
 			</interceptor-stack>
+			
+			<!-- stack to be used as the default for the admin package -->
+			<interceptor-stack name="adminStack">
+			    <interceptor-ref name="setupAndCancel"/>
+			    <!-- I will add authentication later using IPT code <interceptor-ref name="requireAdmin"/> -->
+			    <interceptor-ref name="sibspStack"/>
+			</interceptor-stack>
 		
 		</interceptors>
 		
@@ -72,4 +79,5 @@
 	</package>
 	
     <include file="struts-site.xml"/>
+    <include file="struts-admin.xml"/>
 </struts>
