@@ -18,6 +18,15 @@
       		<result name="home" type="redirect">/home.do</result>
       		<result type="redirect">home.do</result>
     	</action>
+    	
+    	<!-- EXTENSION & VOCAB MANAGEMENT -->
+    	<action name="extensions" class="net.sibcolombia.sibsp.action.administration.ExtensionsAction" method="list">
+    	    <result>/WEB-INF/pages/administration/extensions.ftl</result>
+		</action>
+		<action name="extension" class="net.sibcolombia.sibsp.action.administration.ExtensionsAction">
+			<result name="input">/WEB-INF/pages/administration/extension.ftl</result>
+			<result type="redirect">extensions.do</result>
+		</action>
 		
 	</package>
 </struts>
