@@ -39,7 +39,9 @@
         <httputils.version>0.2</httputils.version>
         <freemarker.version>2.3.19</freemarker.version>
         <guava.version>13.0.1</guava.version>
+        <gson.version>2.2.2</gson.version>
         <jsr305.version>1.3.9</jsr305.version>
+        <xstream.version>1.4.3</xstream.version>
     </properties>
     
 	<developers>
@@ -162,6 +164,13 @@
 			<version>${guava.version}</version>
 		</dependency>
 		
+		<!-- JSON representation -->
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>${gson.version}</version>
+		</dependency>
+		
 		<dependency>
 		    <groupId>org.apache.struts.xwork</groupId>
 			<artifactId>xwork-core</artifactId>
@@ -276,6 +285,13 @@
 			<groupId>com.google.code.findbugs</groupId>
 			<artifactId>jsr305</artifactId>
 			<version>${jsr305.version}</version>
+		</dependency>
+		
+		<!-- XStream for resource config data persistency (could be replaced by JAXB in the future) -->
+		<dependency>
+			<groupId>com.thoughtworks.xstream</groupId>
+			<artifactId>xstream</artifactId>
+			<version>${xstream.version}</version>
 		</dependency>
         
     </dependencies>

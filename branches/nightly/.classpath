@@ -58,5 +58,7 @@
 	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/xz-1.0.jar"/>
 	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/guava-13.0.1.jar"/>
 	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/jsr305-1.3.9.jar"/>
+	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/gson-2.2.2.jar"/>
+	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/xstream-1.4.3.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
