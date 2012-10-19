@@ -105,4 +105,21 @@ public class BaseAction extends ActionSupport implements SessionAware, Preparabl
     }
   }
 
+  /**
+   * Utility to compare 2 objects for comparison when both converted to strings useful to compare if a submitted value
+   * is the same as the persisted value.
+   * 
+   * @return true only if o1.equals(o2)
+   */
+  protected boolean stringEquals(Object o1, Object o2) {
+    // both null
+    if (o1 == null && o2 == null) {
+      return true;
+    }
+    if (o1 != null && o2 != null) {
+      return o1.toString().equals(o2.toString());
+    }
+    return false;
+  }
+
 }

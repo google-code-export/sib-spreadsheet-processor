@@ -41,6 +41,10 @@ public class ApplicationConfig {
     loadConfigurationSettings();
   }
 
+  public DataDir getDataDir() {
+    return dataDir;
+  }
+
   public String getProperty(String key) {
     return properties.getProperty(key);
   }

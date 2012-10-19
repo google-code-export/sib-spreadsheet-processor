@@ -5,7 +5,7 @@
 	<div>
 		[@s.fielderror cssClass="alert alert-error" fieldName="file"/]
 		<label for="file">[@s.text name="sibsp.application.upload.subintro"/]</label>
-    	[@s.file cssClass="btn" cssStyle="width:90%;" name="file" key="manage.resource.create.file" required="true"/]
+    	[@s.file cssClass="btn" cssStyle="width:90%;" name="file" key="sibsp.application.resource.upload.file" required="true"/]
   </div>
   <br/>
   [@s.submit cssClass="btn btn-primary" name="create" key="button.sendfile"/]
