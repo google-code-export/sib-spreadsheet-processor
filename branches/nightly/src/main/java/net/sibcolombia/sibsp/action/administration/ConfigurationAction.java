@@ -46,8 +46,7 @@ public class ConfigurationAction extends POSTAction {
    */
   @Override
   public String save() {
-    log.info("Changing the IPT configuration");
-    boolean rootUrlChanged = false;
+    log.info("Changing the SiBSP configuration");
     // base URL
     if (!stringEquals(rootURL, config.getRootURL())) {
       log.info("Changing the installation rootURL from [" + config.getRootURL() + "] to [" + rootURL + "]");
@@ -62,7 +61,6 @@ public class ConfigurationAction extends POSTAction {
           || Rurl.getHost().equalsIgnoreCase(configurationManager.getHostName())) {
           addActionWarning(getText("admin.config.error.localhostURL"));
         }
-        rootUrlChanged = true;
       } catch (MalformedURLException e) {
         addActionError(getText("admin.config.error.invalidRootURL"));
         return INPUT;
