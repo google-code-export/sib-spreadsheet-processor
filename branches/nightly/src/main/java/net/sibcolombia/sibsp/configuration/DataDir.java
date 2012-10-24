@@ -7,8 +7,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
 
-import com.google.inject.Singleton;
 import javax.annotation.Nullable;
+
+import com.google.inject.Singleton;
+import net.sibcolombia.sibsp.model.Resource;
+import net.sibcolombia.sibsp.model.Source;
 import net.sibcolombia.sibsp.service.InvalidConfigException;
 import net.sibcolombia.sibsp.service.InvalidConfigException.TYPE;
 import org.apache.commons.io.FileUtils;
@@ -20,8 +23,8 @@ public class DataDir {
 
   private static final String CONFIG_DIR = "config";
   public static final String RESOURCES_DIR = "resources";
-  private static final String LOG_DIR = "logs";
   public static final String TMP_DIR = "temp";
+  public static final String LOGGING_DIR = "logs";
   public static final String EML_XML_FILENAME = "eml.xml";
 
   private static Logger log = Logger.getLogger(DataDir.class);
@@ -91,7 +94,7 @@ public class DataDir {
     // create config, resources and lucene directories
     File configDir = dataFile(CONFIG_DIR);
     File resourcesDir = dataFile(RESOURCES_DIR);
-    File loggingDir = dataFile(LOG_DIR);
+    File loggingDir = dataFile(LOGGING_DIR);
     FileUtils.forceMkdir(configDir);
     FileUtils.forceMkdir(resourcesDir);
     FileUtils.forceMkdir(loggingDir);
@@ -137,6 +140,13 @@ public class DataDir {
     return dataDir != null && dataDir.exists();
   }
 
+  /**
+   * Constructs an absolute path to the logs folder of the data dir.
+   */
+  public File loggingDir() {
+    return dataFile(LOGGING_DIR);
+  }
+
   private void persistLocation() throws IOException {
     // persist location in WEB-INF
     FileUtils.writeStringToFile(dataDirSettingFile, dataDir.getAbsolutePath());
@@ -151,6 +161,15 @@ public class DataDir {
       fn = "eml-" + version + ".xml";
     }
     return dataFile(RESOURCES_DIR + "/" + resourceName + "/" + fn);
+  }
+
+  /**
+   * Constructs an absolute path to a file within a resource folder inside the data dir
+   * 
+   * @param path the relative path within the individual resource folder
+   */
+  public File resourceFile(String resourceName, String path) {
+    return dataFile(RESOURCES_DIR + "/" + resourceName + "/" + path);
   }
 
   /**
@@ -215,6 +234,13 @@ public class DataDir {
         }
       }
     }
+  }
+
+  public File sourceFile(Resource resource, Source source) {
+    if (resource == null) {
+      return null;
+    }
+    return resourceFile(resource.getShortname(), "sources/" + source.getName() + ".txt");
   }
 
   public File tmpDir() {

@@ -28,4 +28,13 @@ public interface ResourceManager {
    */
   List<Resource> list();
 
+  /**
+   * Load all configured resources from the datadir into memory.
+   * We do not keep the EML or mapping configuration in memory for all resources, but we
+   * maintain a map of the basic metadata and authorisation information in this manager.
+   * 
+   * @return number of configured resource loaded into memory
+   */
+  int load();
+
 }

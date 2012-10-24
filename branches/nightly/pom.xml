@@ -55,6 +55,12 @@
 		</developer>
     </developers>
     
+    <scm>
+    	<connection>scm:svn:http://sib-spreadsheet-processor.googlecode.com/svn/branches/nightly</connection>
+    	<developerConnection>scm:svn:https://sib-spreadsheet-processor.googlecode.com/svn/branches/nightly</developerConnection>
+    	<url>http://sib-spreadsheet-processor.googlecode.com/source/browse#svn/branches/nightly</url>
+    </scm>
+    
     <repositories>
         <repository>
             <id>gbif-all</id>
@@ -85,6 +91,29 @@
                     	</file>
                 	</additionalConfig>
             	</configuration>
+        	</plugin>
+        	
+        	<!--
+        	small plugin that allows to access the projects SVN revision number.
+        	Useful to keep the pom ipt version at 1.x-SNAPSHOT while still having a unique build number
+        	See: http://mojo.codehaus.org/buildnumber-maven-plugin/usage.html
+        	-->
+        	<plugin>
+        		<groupId>org.codehaus.mojo</groupId>
+        		<artifactId>buildnumber-maven-plugin</artifactId>
+        		<version>1.1</version>
+        		<executions>
+        			<execution>
+        				<phase>validate</phase>
+        				<goals>
+        					<goal>create</goal>
+        				</goals>
+        			</execution>
+        		</executions>
+        		<configuration>
+        			<doCheck>${devModeNegated}</doCheck>
+        			<doUpdate>${devModeNegated}</doUpdate>
+        		</configuration>
         	</plugin>
 
         	<plugin>
