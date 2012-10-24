@@ -8,6 +8,7 @@ import com.google.inject.Inject;
 import net.sibcolombia.sibsp.action.BaseAction;
 import net.sibcolombia.sibsp.interfaces.ConfigurationManager;
 import net.sibcolombia.sibsp.service.InvalidConfigException;
+import net.sibcolombia.sibsp.service.admin.ExtensionManager;
 import net.sibcolombia.sibsp.struts2.SimpleTextProvider;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -23,6 +24,8 @@ public class ConfigurationAction extends BaseAction {
   protected ConfigurationManager configurationManager;
   private final DataDir dataDir;
 
+  private final ExtensionManager extensionManager;
+
   // Action attributes
   protected String dataDirPath;
   protected String urlPath;
@@ -30,10 +33,11 @@ public class ConfigurationAction extends BaseAction {
 
   @Inject
   public ConfigurationAction(SimpleTextProvider textProvider, ApplicationConfig config,
-    ConfigurationManager configurationManager, DataDir dataDir) {
+    ConfigurationManager configurationManager, DataDir dataDir, ExtensionManager extensionManager) {
     super(textProvider, config);
     this.configurationManager = configurationManager;
     this.dataDir = dataDir;
+    this.extensionManager = extensionManager;
   }
 
   /**

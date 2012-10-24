@@ -7,6 +7,7 @@ import org.gbif.metadata.eml.BBox;
 import org.gbif.metadata.eml.BibliographicCitationSet;
 import org.gbif.metadata.eml.Citation;
 import org.gbif.metadata.eml.Eml;
+import org.gbif.metadata.eml.EmlFactory;
 import org.gbif.metadata.eml.EmlWriter;
 import org.gbif.metadata.eml.GeospatialCoverage;
 import org.gbif.metadata.eml.JGTICuratorialUnit;
@@ -19,7 +20,12 @@ import org.gbif.metadata.eml.TaxonomicCoverage;
 import org.gbif.metadata.eml.TemporalCoverage;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -27,15 +33,27 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import com.google.inject.Inject;
+import com.thoughtworks.xstream.XStream;
 import freemarker.template.TemplateException;
 import net.sibcolombia.sibsp.action.BaseAction;
 import net.sibcolombia.sibsp.configuration.ApplicationConfig;
+import net.sibcolombia.sibsp.configuration.Constants;
 import net.sibcolombia.sibsp.configuration.DataDir;
 import net.sibcolombia.sibsp.interfaces.ResourceManager;
+import net.sibcolombia.sibsp.model.Extension;
+import net.sibcolombia.sibsp.model.ExtensionMapping;
 import net.sibcolombia.sibsp.model.Resource;
+import net.sibcolombia.sibsp.model.Resource.CoreRowType;
+import net.sibcolombia.sibsp.model.Source;
+import net.sibcolombia.sibsp.model.Source.FileSource;
+import net.sibcolombia.sibsp.service.InvalidConfigException.TYPE;
+import net.sibcolombia.sibsp.service.admin.ExtensionManager;
+import net.sibcolombia.sibsp.service.admin.VocabulariesManager;
+import net.sibcolombia.sibsp.service.registry.RegistryManager;
 import net.sibcolombia.sibsp.struts2.SimpleTextProvider;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
@@ -43,6 +61,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.xml.sax.SAXException;
 
 
 public class ResourceManagerImpl extends BaseManager implements ResourceManager {
@@ -50,14 +69,30 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
   private Resource resource;
   // key=shortname in lower case, value=resource
   private final Map<String, Resource> resources = new HashMap<String, Resource>();
+  public static final String PERSISTENCE_FILE = "resource.xml";
+  private final XStream xstream = new XStream();
+  public static final String RESOURCE_IDENTIFIER_LINK_PART = "/resource.do?id=";
+  private final ExtensionManager extensionManager;
 
   // create instance of BaseAction - allows class to retrieve i18n terms via getText()
   private final BaseAction baseAction;
+  private final RegistryManager registryManager;
+  private final VocabulariesManager vocabularyManager;
+  private final SimpleTextProvider textProvider;
 
   @Inject
-  public ResourceManagerImpl(ApplicationConfig config, DataDir dataDir, SimpleTextProvider simpleTextProvider) {
+  public ResourceManagerImpl(ApplicationConfig config, DataDir dataDir, SimpleTextProvider simpleTextProvider,
+    RegistryManager registryManager, ExtensionManager extensionManager, VocabulariesManager vocabularyManager) {
     super(config, dataDir);
+    this.extensionManager = extensionManager;
+    this.registryManager = registryManager;
+    this.vocabularyManager = vocabularyManager;
+    this.textProvider = simpleTextProvider;
     baseAction = new BaseAction(simpleTextProvider, config);
+  }
+
+  private void addResource(Resource res) {
+    resources.put(res.getShortname().toLowerCase(), res);
   }
 
   @Override
@@ -110,6 +145,38 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
     return resource;
   }
 
+  public URL getResourceLink(String shortname) {
+    URL url = null;
+    try {
+      url = new URL(config.getRootURL() + RESOURCE_IDENTIFIER_LINK_PART + shortname);
+    } catch (MalformedURLException e) {
+      log.error(e);
+    }
+    return url;
+  }
+
+  /**
+   * The resource's coreType could be null. This could happen because before 2.0.3 it was not saved to resource.xml.
+   * During upgrades to 2.0.3, a bug in MetadataAction would (wrongly) automatically set the coreType:
+   * Checklist resources became Occurrence, and vice versa. This method will try to infer the coreType by matching
+   * the coreRowType against the taxon and occurrence rowTypes.
+   * 
+   * @param resource Resource
+   * @return resource with coreType set if it could be inferred, or unchanged if it couldn't be inferred.
+   */
+  Resource inferCoreType(Resource resource) {
+    if (resource != null && resource.getCoreRowType() != null) {
+      if (Constants.DWC_ROWTYPE_OCCURRENCE.equalsIgnoreCase(resource.getCoreRowType())) {
+        resource.setCoreType(CoreRowType.OCCURRENCE.toString().toLowerCase());
+      } else if (Constants.DWC_ROWTYPE_TAXON.equalsIgnoreCase(resource.getCoreRowType())) {
+        resource.setCoreType(CoreRowType.CHECKLIST.toString().toLowerCase());
+      }
+    } else {
+      // don't do anything - no taxon or occurrence mapping has been done yet
+    }
+    return resource;
+  }
+
   private boolean isBasicOcurrenceOnly(String onlyFileName) {
     if (onlyFileName.equalsIgnoreCase("DwC_min_elements_template_version_1.0")) {
       return true;
@@ -129,6 +196,127 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
   @Override
   public List<Resource> list() {
     return new ArrayList<Resource>(resources.values());
+  }
+
+  @Override
+  public int load() {
+    File resourcesDir = dataDir.dataFile(DataDir.RESOURCES_DIR);
+    resources.clear();
+    int counter = 0;
+    if (resourcesDir != null) {
+      File[] resources = resourcesDir.listFiles();
+      if (resources != null) {
+        for (File resourceDir : resources) {
+          if (resourceDir.isDirectory()) {
+            try {
+              addResource(loadFromDir(resourceDir));
+              counter++;
+            } catch (InvalidConfigException e) {
+              log.error("Cant load resource " + resourceDir.getName(), e);
+            }
+          }
+        }
+        log.info("Loaded " + counter + " resources into memory alltogether.");
+      } else {
+        log.info("Data directory does not hold a resources directory: " + dataDir.dataFile(""));
+      }
+    } else {
+      log.info("Data directory does not hold a resources directory: " + dataDir.dataFile(""));
+    }
+    return counter;
+  }
+
+  private Eml loadEml(Resource resource) {
+    File emlFile = dataDir.resourceEmlFile(resource.getShortname(), null);
+    Eml eml = null;
+    try {
+      InputStream in = new FileInputStream(emlFile);
+      eml = EmlFactory.build(in);
+    } catch (FileNotFoundException e) {
+      eml = new Eml();
+    } catch (IOException e) {
+      log.error(e);
+    } catch (SAXException e) {
+      log.error("Invalid EML document", e);
+      eml = new Eml();
+    } catch (Exception e) {
+      eml = new Eml();
+    }
+    resource.setEml(eml);
+    syncEmlWithResource(resource);
+    return eml;
+  }
+
+  /**
+   * Calls loadFromDir(File, ActionLogger), inserting a new instance of ActionLogger.
+   * 
+   * @param resourceDir resource directory
+   * @return loaded Resource
+   */
+  private Resource loadFromDir(File resourceDir) {
+    return loadFromDir(resourceDir, new ActionLogger(log, new BaseAction(textProvider, config)));
+  }
+
+  /**
+   * Reads a complete resource configuration (resource config & eml) from the resource config folder
+   * and returns the Resource instance for the internal in memory cache.
+   */
+  private Resource loadFromDir(File resourceDir, ActionLogger alog) throws InvalidConfigException {
+    if (resourceDir.exists()) {
+      // load full configuration from resource.xml and eml.xml files
+      String shortname = resourceDir.getName();
+      try {
+        File cfgFile = dataDir.resourceFile(shortname, PERSISTENCE_FILE);
+        InputStream input = new FileInputStream(cfgFile);
+        Resource resource = (Resource) xstream.fromXML(input);
+        // non existing users end up being a NULL in the set, so remove them
+        // shouldnt really happen - but people can even manually cause a mess
+        resource.getManagers().remove(null);
+
+        // non existent Extension end up being NULL
+        // for ex, a user is trying to import a resource from one IPT to another without all required exts installed.
+        for (ExtensionMapping ext : resource.getMappings()) {
+          Extension x = ext.getExtension();
+          if (x == null) {
+            alog.warn("manage.resource.create.extension.null");
+            throw new InvalidConfigException(TYPE.INVALID_EXTENSION, "Resource references non-existent extension");
+          } else if (extensionManager.get(x.getRowType()) == null) {
+            alog.warn("manage.resource.create.rowType.null", new String[] {x.getRowType()});
+            throw new InvalidConfigException(TYPE.INVALID_EXTENSION, "Resource references non-installed extension");
+          }
+        }
+
+        // shortname persists as folder name, so xstream doesnt handle this:
+        resource.setShortname(shortname);
+
+        // infer coreType if null
+        if (resource.getCoreType() == null) {
+          inferCoreType(resource);
+        }
+
+        // standardize subtype if not null
+        if (resource.getSubtype() != null) {
+          standardizeSubtype(resource);
+        }
+
+        // add proper source file pointer
+        for (Source src : resource.getSources()) {
+          src.setResource(resource);
+          if (src instanceof FileSource) {
+            ((FileSource) src).setFile(dataDir.sourceFile(resource, src));
+          }
+        }
+        // load eml
+        loadEml(resource);
+        log.debug("Read resource configuration for " + shortname);
+        return resource;
+      } catch (FileNotFoundException e) {
+        log.error("Cannot read resource configuration for " + shortname, e);
+        throw new InvalidConfigException(TYPE.RESOURCE_CONFIG, "Cannot read resource configuration for " + shortname
+          + ": " + e.getMessage());
+      }
+    }
+    return null;
   }
 
   private void readAdditionalMetadata(Eml eml, Workbook template) throws InvalidFormatException {
@@ -598,6 +786,46 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
       log.error("EML template exception", e);
       // throw new InvalidConfigException(TYPE.EML, "EML template exception when writing eml for " + resource + ": " +
 // e.getMessage());
+    }
+  }
+
+  /**
+   * The resource's subType might not have been set using a standardized term from the dataset_subtype vocabulary.
+   * All versions before 2.0.4 didn't use the vocabulary, so this method is particularly important during upgrades
+   * to 2.0.4 and later. Basically, if the subType isn't recognized as belonging to the vocabulary, it is reset as
+   * null. That would mean the user would then have to reselect the subtype from the Basic Metadata page.
+   * 
+   * @param resource Resource
+   * @return resource with subtype set using term from dataset_subtype vocabulary (assuming it has been set).
+   */
+  Resource standardizeSubtype(Resource resource) {
+    if (resource != null && resource.getSubtype() != null) {
+      // the vocabulary key names are identifiers and standard across Locales
+      // it's this key we want to persist as the subtype
+      Map<String, String> subtypes =
+        vocabularyManager.getI18nVocab(Constants.VOCAB_URI_DATASET_SUBTYPES, Locale.ENGLISH.getLanguage(), false);
+      boolean usesVocab = false;
+      for (Map.Entry<String, String> entry : subtypes.entrySet()) {
+        // remember to do comparison regardless of case, since the subtype is stored in lowercase
+        if (resource.getSubtype().equalsIgnoreCase(entry.getKey())) {
+          usesVocab = true;
+        }
+      }
+      // if the subtype doesn't use a standardized term from the vocab, it's reset to null
+      if (!usesVocab) {
+        resource.setSubtype(null);
+      }
+    }
+    return resource;
+  }
+
+  private void syncEmlWithResource(Resource resource) {
+    resource.getEml().setEmlVersion(resource.getEmlVersion());
+    // we need some GUID. If we have use the registry key, if not use the resource URL
+    if (resource.getKey() != null) {
+      resource.getEml().setGuid(resource.getKey().toString());
+    } else {
+      resource.getEml().setGuid(getResourceLink(resource.getShortname()).toString());
     }
   }
 

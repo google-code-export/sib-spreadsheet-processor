@@ -28,6 +28,7 @@ public class ApplicationConfig {
   private static final String CLASSPATH_PROPFILE = "application.properties";
   public static final String ROOTURL = "sibsp.rootURL";
   public static final String PROXY = "proxy";
+  public static final String DEBUG = "debug";
   private DataDir dataDir;
   private Properties properties = new Properties();
   private static final Logger LOG = Logger.getLogger(ApplicationConfig.class);
@@ -40,6 +41,10 @@ public class ApplicationConfig {
   public ApplicationConfig(DataDir dataDir) {
     this.dataDir = dataDir;
     loadConfigurationSettings();
+  }
+
+  public boolean debug() {
+    return "true".equalsIgnoreCase(properties.getProperty(DEBUG));
   }
 
   public DataDir getDataDir() {

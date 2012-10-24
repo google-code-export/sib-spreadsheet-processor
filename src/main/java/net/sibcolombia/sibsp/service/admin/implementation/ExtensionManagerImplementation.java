@@ -222,7 +222,7 @@ public class ExtensionManagerImplementation extends BaseManager implements Exten
       log.error(msg);
 
       // add startup error message that explains the consequence of the Registry error
-      msg = baseAction.getText("admin.extensions.couldnt.load", new String[] {config.getRegistryUrl()});
+      msg = baseAction.getText("admin.config.extensions.couldnt.load", new String[] {config.getRegistryUrl()});
       warnings.addStartupError(msg);
       log.error(msg);
     }

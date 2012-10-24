@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
  */
 public class PrivateResourceInterceptor extends AbstractInterceptor {
 
+  private static final long serialVersionUID = 3975016325029900488L;
   private static Logger log = Logger.getLogger(RequireAdminInterceptor.class);
 
   @Override

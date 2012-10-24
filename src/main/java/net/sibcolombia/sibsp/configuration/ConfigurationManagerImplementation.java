@@ -1,20 +1,28 @@
 package net.sibcolombia.sibsp.configuration;
 
+import org.gbif.ipt.utils.InputStreamUtils;
+import org.gbif.ipt.utils.LogFileAppender;
 import org.gbif.utils.HttpUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.List;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.sibcolombia.sibsp.interfaces.ConfigurationManager;
+import net.sibcolombia.sibsp.interfaces.ResourceManager;
+import net.sibcolombia.sibsp.model.Extension;
 import net.sibcolombia.sibsp.service.BaseManager;
 import net.sibcolombia.sibsp.service.InvalidConfigException;
 import net.sibcolombia.sibsp.service.InvalidConfigException.TYPE;
+import net.sibcolombia.sibsp.service.admin.ExtensionManager;
+import net.sibcolombia.sibsp.service.admin.VocabulariesManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -22,17 +30,31 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.xml.DOMConfigurator;
 
 @Singleton
 public class ConfigurationManagerImplementation extends BaseManager implements ConfigurationManager {
 
   private final DefaultHttpClient client;
+  private final InputStreamUtils streamUtils;
+  private final ResourceManager resourceManager;
+  private final ExtensionManager extensionManager;
+  private final VocabulariesManager vocabularyManager;
+  private final ConfigWarnings warnings;
   private final HttpUtil http;
   private static final String PATH_TO_CSS = "/css/style.css";
 
   @Inject
-  public ConfigurationManagerImplementation(ApplicationConfig config, DataDir dataDir, DefaultHttpClient client) {
+  public ConfigurationManagerImplementation(ApplicationConfig config, InputStreamUtils streamUtils, DataDir dataDir,
+    ResourceManager resourceManager, ExtensionManager extensionManager, VocabulariesManager vocabularyManager,
+    ConfigWarnings warnings, DefaultHttpClient client) {
     super(config, dataDir);
+    this.streamUtils = streamUtils;
+    this.resourceManager = resourceManager;
+    this.extensionManager = extensionManager;
+    this.vocabularyManager = vocabularyManager;
+    this.warnings = warnings;
     this.client = client;
     this.http = new HttpUtil(client);
     if (dataDir.isConfigured()) {
@@ -113,6 +135,43 @@ public class ConfigurationManagerImplementation extends BaseManager implements C
     log.info("Loading SiB-SP config ...");
     config.loadConfigurationSettings();
 
+    log.info("Reloading log4j settings ...");
+    reloadLogger();
+
+    log.info("Loading vocabularies ...");
+    vocabularyManager.load();
+
+    log.info("Loading dwc extensions ...");
+    extensionManager.load();
+
+    log.info("Loading resource configurations ...");
+    resourceManager.load();
+
+    List<Extension> list = extensionManager.listCore();
+
+    if (list.isEmpty()) {
+      // load all registered extensions from registry, and install core extensions
+      extensionManager.installCoreTypes();
+    }
+  }
+
+  private void reloadLogger() {
+    LogFileAppender.LOGDIR = dataDir.loggingDir().getAbsolutePath();
+    log.info("Setting logging dir to " + LogFileAppender.LOGDIR);
+
+    InputStream log4j;
+    // use different log4j settings files for production or debug mode
+    if (config.debug()) {
+      log4j = streamUtils.classpathStream("log4j.xml");
+    } else {
+      log4j = streamUtils.classpathStream("log4j-production.xml");
+    }
+    LogManager.resetConfiguration();
+    DOMConfigurator domConfig = new DOMConfigurator();
+    domConfig.doConfigure(log4j, LogManager.getLoggerRepository());
+    log.info("Reloaded log4j for " + (config.debug() ? "debugging" : "production"));
+    log.info("Logging to " + LogFileAppender.LOGDIR);
+    log.info("SiBSP Data Directory: " + dataDir.dataFile(".").getAbsolutePath());
   }
 
   @Override

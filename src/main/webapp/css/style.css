@@ -148,6 +148,7 @@ hr {
 @media (max-width: 980px) and (min-width: 768px) {
 	.sibsp-sidenav {
 		width: 166px;
+		margin-top: 15px;
 	}
 }
 @media (max-width: 767px) {
@@ -155,4 +156,60 @@ hr {
 		width: auto;
 		margin-bottom: 20px;
 	}
+}
+.row-without-spaces {
+	width: 100%;
+	margin-bottom: 20px;
+	float: left;
+}
+.row-without-spaces .column-one .title {
+	margin-right: 10px;
+	margin-bottom: 10px;
+}
+.row-without-spaces .column-two .body {
+	margin-right: 10px;
+	margin-left: 10px;
+}
+@media (min-width: 768px) {
+	.row-without-spaces .column-one {
+		width: 20%;
+		float: left;
+		background-color: #DDD;
+	}
+	.row-without-spaces .column-two {
+		width: 80%;
+		float: left;
+	}
+}
+@media (max-width: 768px) {
+	.row-without-spaces .column-one {
+		width: 100%;
+		float: none;
+		background-color: #DDD;
+	}
+	.row-without-spaces .column-two {
+		width: 100%;
+		float: none;
+	}
+}
+.row-without-spaces2 .column-one {
+	width: 100%;
+	float: none;
+	background-color: #DDD;
+}
+.row-without-spaces2 .column-two {
+	width: 100%;
+	float: none;
+	margin-bottom: 20px;
+}
+table.table-properties td {
+	padding-left: 20px;
+}
+table.table-properties td.property {
+	padding-left: 20px;
+	font-weight: bold;
+}
+.row-without-spaces .column-one p {
+	margin-right: 10px;
+	margin-bottom: 0px;		
 }

@@ -23,6 +23,7 @@ import net.sibcolombia.sibsp.configuration.ApplicationConfig;
 import net.sibcolombia.sibsp.configuration.ConfigWarnings;
 import net.sibcolombia.sibsp.configuration.DataDir;
 import net.sibcolombia.sibsp.model.Extension;
+import net.sibcolombia.sibsp.model.Vocabulary;
 import net.sibcolombia.sibsp.service.BaseManager;
 import net.sibcolombia.sibsp.service.RegistryException;
 import net.sibcolombia.sibsp.service.RegistryException.TYPE;
@@ -70,6 +71,26 @@ public class RegistryManagerImplementation extends BaseManager implements Regist
    */
   private String getExtensionsURL(boolean json) {
     return String.format("%s%s%s", config.getRegistryUrl(), "/registry/extensions", json ? ".json" : "/");
+  }
+
+  /*
+   * (non-Javadoc)
+   * @see org.gbif.ipt.service.registry.RegistryManager#getVocabularies()
+   */
+  @Override
+  public List<Vocabulary> getVocabularies() throws RegistryException {
+    Map<String, List<Vocabulary>> map =
+      gson.fromJson(requestHttpGetFromRegistry(getVocabulariesURL(true)).content,
+        new TypeToken<Map<String, List<Vocabulary>>>() {
+        }.getType());
+    return (map.get("thesauri") == null) ? new ArrayList<Vocabulary>() : map.get("thesauri");
+  }
+
+  /**
+   * Returns the Extensions url.
+   */
+  private String getVocabulariesURL(boolean json) {
+    return String.format("%s%s%s", config.getRegistryUrl(), "/registry/thesauri", json ? ".json" : "/");
   }
 
   /**

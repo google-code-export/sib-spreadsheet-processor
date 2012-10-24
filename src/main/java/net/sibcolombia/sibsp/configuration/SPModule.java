@@ -8,12 +8,16 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.servlet.ServletContext;
+import javax.xml.parsers.SAXParserFactory;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import net.sibcolombia.sibsp.model.factory.ExtensionFactory;
+import net.sibcolombia.sibsp.model.factory.VocabularyFactory;
+import net.sibcolombia.sibsp.struts2.SimpleTextProvider;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.log4j.Logger;
 
@@ -32,6 +36,9 @@ public class SPModule extends AbstractModule {
     // singletons
     bind(ApplicationConfig.class).in(Scopes.SINGLETON);
     bind(InputStreamUtils.class).in(Scopes.SINGLETON);
+    bind(SimpleTextProvider.class).in(Scopes.SINGLETON);
+    bind(ExtensionFactory.class).in(Scopes.SINGLETON);
+    bind(VocabularyFactory.class).in(Scopes.SINGLETON);
   }
 
   @Provides
@@ -72,5 +79,20 @@ public class SPModule extends AbstractModule {
     DefaultHttpClient client = provideHttpClient();
     // Return a singleton instance of HttpUtil
     return new HttpUtil(client);
+  }
+
+  @Provides
+  @Inject
+  @Singleton
+  public SAXParserFactory provideNsAwareSaxParserFactory() {
+    SAXParserFactory saxf = null;
+    try {
+      saxf = SAXParserFactory.newInstance();
+      saxf.setValidating(false);
+      saxf.setNamespaceAware(true);
+    } catch (Exception e) {
+      LOG.error("Cant create namespace aware SAX Parser Factory: " + e.getMessage(), e);
+    }
+    return saxf;
   }
 }
