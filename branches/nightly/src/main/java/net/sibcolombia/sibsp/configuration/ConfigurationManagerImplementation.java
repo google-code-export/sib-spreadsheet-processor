@@ -13,10 +13,11 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.List;
 
+import net.sibcolombia.sibsp.service.portal.ResourceManager;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.sibcolombia.sibsp.interfaces.ConfigurationManager;
-import net.sibcolombia.sibsp.interfaces.ResourceManager;
 import net.sibcolombia.sibsp.model.Extension;
 import net.sibcolombia.sibsp.service.BaseManager;
 import net.sibcolombia.sibsp.service.InvalidConfigException;

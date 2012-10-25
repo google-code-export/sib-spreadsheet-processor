@@ -1,4 +1,4 @@
-package net.sibcolombia.sibsp.service;
+package net.sibcolombia.sibsp.service.portal.implementation;
 
 import org.gbif.ipt.utils.ActionLogger;
 import org.gbif.metadata.eml.Address;
@@ -43,16 +43,21 @@ import net.sibcolombia.sibsp.action.BaseAction;
 import net.sibcolombia.sibsp.configuration.ApplicationConfig;
 import net.sibcolombia.sibsp.configuration.Constants;
 import net.sibcolombia.sibsp.configuration.DataDir;
-import net.sibcolombia.sibsp.interfaces.ResourceManager;
 import net.sibcolombia.sibsp.model.Extension;
 import net.sibcolombia.sibsp.model.ExtensionMapping;
+import net.sibcolombia.sibsp.model.ExtensionProperty;
+import net.sibcolombia.sibsp.model.PropertyMapping;
+import net.sibcolombia.sibsp.model.RecordFilter;
 import net.sibcolombia.sibsp.model.Resource;
 import net.sibcolombia.sibsp.model.Resource.CoreRowType;
 import net.sibcolombia.sibsp.model.Source;
 import net.sibcolombia.sibsp.model.Source.FileSource;
+import net.sibcolombia.sibsp.service.BaseManager;
+import net.sibcolombia.sibsp.service.InvalidConfigException;
 import net.sibcolombia.sibsp.service.InvalidConfigException.TYPE;
 import net.sibcolombia.sibsp.service.admin.ExtensionManager;
 import net.sibcolombia.sibsp.service.admin.VocabulariesManager;
+import net.sibcolombia.sibsp.service.portal.ResourceManager;
 import net.sibcolombia.sibsp.service.registry.RegistryManager;
 import net.sibcolombia.sibsp.struts2.SimpleTextProvider;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -72,6 +77,7 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
   public static final String PERSISTENCE_FILE = "resource.xml";
   private final XStream xstream = new XStream();
   public static final String RESOURCE_IDENTIFIER_LINK_PART = "/resource.do?id=";
+  private static final String RESOURCE_OCURRENCE_NAME = "http://rs.tdwg.org/dwc/terms/Occurrence";
   private final ExtensionManager extensionManager;
 
   // create instance of BaseAction - allows class to retrieve i18n terms via getText()
@@ -79,6 +85,9 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
   private final RegistryManager registryManager;
   private final VocabulariesManager vocabularyManager;
   private final SimpleTextProvider textProvider;
+  private ExtensionMapping mapping;
+  private ExtensionProperty coreid;
+  private PropertyMapping mappingCoreid;
 
   @Inject
   public ResourceManagerImpl(ApplicationConfig config, DataDir dataDir, SimpleTextProvider simpleTextProvider,
@@ -101,48 +110,41 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
     ActionLogger actionLogger = new ActionLogger(this.log, createEmlAction);
     if (isEmlOnly(onlyFileName)) {
       // Process template with metadata only workbook
-      this.resource = createFromMetadataOnlySpreadsheet(sourceFile, fileName, actionLogger);
+      this.resource = processMetadataSpreadsheetPart(sourceFile, fileName, actionLogger);
       saveEml(fileName);
+      sourceFile.delete();
     } else if (isBasicOcurrenceOnly(onlyFileName)) {
       // Process template with metadata and basic data of ocurrence file
-
+      this.resource = processMetadataSpreadsheetPart(sourceFile, fileName, actionLogger);
+      // Get the extension to use for mapper
+      Extension extension = extensionManager.get(RESOURCE_OCURRENCE_NAME);
+      if (extension != null) {
+        mapping = new ExtensionMapping();
+        mapping.setExtension(extension);
+      }
+      if (mapping != null || mapping.getExtension() != null) {
+        // set empty filter if not existing
+        if (mapping.getFilter() == null) {
+          mapping.setFilter(new RecordFilter());
+        }
+        String coreRowType = mapping.getExtension().getRowType();
+        // setup the core record id term
+        String coreIdTerm = Constants.DWC_OCCURRENCE_ID;
+        if (coreRowType.equalsIgnoreCase(Constants.DWC_ROWTYPE_TAXON)) {
+          coreIdTerm = Constants.DWC_TAXON_ID;
+        }
+        coreid = extensionManager.get(coreRowType).getProperty(coreIdTerm);
+        mappingCoreid = mapping.getField(coreid.getQualname());
+        if (mappingCoreid == null) {
+          // no, create bare mapping field
+          mappingCoreid = new PropertyMapping();
+          mappingCoreid.setTerm(coreid);
+          mappingCoreid.setIndex(mapping.getIdColumn());
+        }
+      }
     } else {
       // Process template with metadata and taxonomy file
     }
-  }
-
-  /**
-   * Process template file to generate an EML XML file
-   * 
-   * @param sourceFile
-   * @param actionLogger
-   * @throws IOException
-   * @throws InvalidFormatException
-   */
-  private Resource createFromMetadataOnlySpreadsheet(File sourceFile, String fileName, ActionLogger actionLogger)
-    throws InvalidFormatException, IOException, NullPointerException {
-    Resource resource = new Resource();
-    Eml eml = new Eml();
-    Workbook template = WorkbookFactory.create(sourceFile);
-
-    readBasicMetaData(eml, template, resource);
-    readGeographicCoverage(eml, template);
-    readTaxonomicCoverage(eml, template);
-    readTemporalCoverage(eml, template);
-    readKeywords(eml, template);
-    readAssociatedParties(eml, template);
-    readProjectData(eml, template);
-    readSamplingMethods(eml, template);
-    readCitations(eml, template);
-    readCollectionData(eml, template);
-    readExternallinks(eml, template);
-    readAdditionalMetadata(eml, template);
-
-    // Set resource details
-    resource.setFileName(fileName);
-    resource.setEml(eml);
-
-    return resource;
   }
 
   public URL getResourceLink(String shortname) {
@@ -317,6 +319,40 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
       }
     }
     return null;
+  }
+
+  /**
+   * Process template file to generate an EML XML file
+   * 
+   * @param sourceFile
+   * @param actionLogger
+   * @throws IOException
+   * @throws InvalidFormatException
+   */
+  private Resource processMetadataSpreadsheetPart(File sourceFile, String fileName, ActionLogger actionLogger)
+    throws InvalidFormatException, IOException, NullPointerException {
+    Resource resource = new Resource();
+    Eml eml = new Eml();
+    Workbook template = WorkbookFactory.create(sourceFile);
+
+    readBasicMetaData(eml, template, resource);
+    readGeographicCoverage(eml, template);
+    readTaxonomicCoverage(eml, template);
+    readTemporalCoverage(eml, template);
+    readKeywords(eml, template);
+    readAssociatedParties(eml, template);
+    readProjectData(eml, template);
+    readSamplingMethods(eml, template);
+    readCitations(eml, template);
+    readCollectionData(eml, template);
+    readExternallinks(eml, template);
+    readAdditionalMetadata(eml, template);
+
+    // Set resource details
+    resource.setFileName(fileName);
+    resource.setEml(eml);
+
+    return resource;
   }
 
   private void readAdditionalMetadata(Eml eml, Workbook template) throws InvalidFormatException {
