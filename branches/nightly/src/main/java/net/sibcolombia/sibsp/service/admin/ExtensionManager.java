@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.google.inject.ImplementedBy;
 import net.sibcolombia.sibsp.model.Extension;
-import net.sibcolombia.sibsp.service.DeletionNotAllowedException;
 import net.sibcolombia.sibsp.service.InvalidConfigException;
 import net.sibcolombia.sibsp.service.admin.implementation.ExtensionManagerImplementation;
 
@@ -14,11 +13,6 @@ import net.sibcolombia.sibsp.service.admin.implementation.ExtensionManagerImplem
  */
 @ImplementedBy(ExtensionManagerImplementation.class)
 public interface ExtensionManager {
-
-  /**
-   * Remove an installed extension by its unique rowType.
-   */
-  void delete(String rowType) throws DeletionNotAllowedException;
 
   /**
    * Get a locally installed extension by its rowType.

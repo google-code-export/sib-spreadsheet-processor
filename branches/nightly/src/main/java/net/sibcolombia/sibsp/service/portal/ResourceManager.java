@@ -1,15 +1,16 @@
 package net.sibcolombia.sibsp.service.portal;
 
+import org.gbif.ipt.utils.ActionLogger;
+
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-
-import net.sibcolombia.sibsp.service.portal.implementation.ResourceManagerImpl;
-
+import java.util.UUID;
 
 import com.google.inject.ImplementedBy;
-import net.sibcolombia.sibsp.action.BaseAction;
 import net.sibcolombia.sibsp.model.Resource;
+import net.sibcolombia.sibsp.service.DeletionNotAllowedException;
+import net.sibcolombia.sibsp.service.InvalidConfigException;
+import net.sibcolombia.sibsp.service.portal.implementation.ResourceManagerImpl;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
 /**
@@ -20,23 +21,41 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 @ImplementedBy(ResourceManagerImpl.class)
 public interface ResourceManager {
 
-  void create(File tmpFile, String fileName, String onlyFileName, String onlyFileExtension, BaseAction createEmlAction)
-    throws InvalidFormatException, IOException;
+  /**
+   * Create a new Resource.
+   * 
+   * @param shortname Resource's shortName
+   * @return Resource newly created, or null if it couldn't be created successfully
+   */
+  Resource create(UUID uniqueID);
 
   /**
-   * list all resources SiB Spreadsheet processor.
+   * Deletes a Resource.
    * 
-   * @return list of resources, or an empty list if none were found
+   * @param resource Resource
+   * @throws IOException if deletion could not be completed
+   * @throws DeletionNotAllowedException if deletion was not allowed to be completed
    */
-  List<Resource> list();
+  void delete(Resource resource) throws IOException;
 
   /**
-   * Load all configured resources from the datadir into memory.
-   * We do not keep the EML or mapping configuration in memory for all resources, but we
-   * maintain a map of the basic metadata and authorisation information in this manager.
+   * Process template file to generate an EML XML file
    * 
-   * @return number of configured resource loaded into memory
+   * @param sourceFile
+   * @param actionLogger
+   * @throws IOException
+   * @throws InvalidFormatException
    */
-  int load();
+  public Resource processMetadataSpreadsheetPart(File sourceFile, String fileName, ActionLogger actionLogger)
+    throws InvalidFormatException, IOException, NullPointerException;
+
+  void save(Resource resource);
+
+  /**
+   * Save the eml file of a resource only. Complementary method to @See save(Resource).
+   * 
+   * @param resource Resource
+   */
+  void saveEml(Resource resource) throws InvalidConfigException;
 
 }

@@ -7,7 +7,6 @@ import org.gbif.metadata.eml.BBox;
 import org.gbif.metadata.eml.BibliographicCitationSet;
 import org.gbif.metadata.eml.Citation;
 import org.gbif.metadata.eml.Eml;
-import org.gbif.metadata.eml.EmlFactory;
 import org.gbif.metadata.eml.EmlWriter;
 import org.gbif.metadata.eml.GeospatialCoverage;
 import org.gbif.metadata.eml.JGTICuratorialUnit;
@@ -20,21 +19,19 @@ import org.gbif.metadata.eml.TaxonomicCoverage;
 import org.gbif.metadata.eml.TemporalCoverage;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.Writer;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 import com.google.inject.Inject;
 import com.thoughtworks.xstream.XStream;
@@ -43,15 +40,8 @@ import net.sibcolombia.sibsp.action.BaseAction;
 import net.sibcolombia.sibsp.configuration.ApplicationConfig;
 import net.sibcolombia.sibsp.configuration.Constants;
 import net.sibcolombia.sibsp.configuration.DataDir;
-import net.sibcolombia.sibsp.model.Extension;
-import net.sibcolombia.sibsp.model.ExtensionMapping;
-import net.sibcolombia.sibsp.model.ExtensionProperty;
-import net.sibcolombia.sibsp.model.PropertyMapping;
-import net.sibcolombia.sibsp.model.RecordFilter;
 import net.sibcolombia.sibsp.model.Resource;
 import net.sibcolombia.sibsp.model.Resource.CoreRowType;
-import net.sibcolombia.sibsp.model.Source;
-import net.sibcolombia.sibsp.model.Source.FileSource;
 import net.sibcolombia.sibsp.service.BaseManager;
 import net.sibcolombia.sibsp.service.InvalidConfigException;
 import net.sibcolombia.sibsp.service.InvalidConfigException.TYPE;
@@ -60,23 +50,20 @@ import net.sibcolombia.sibsp.service.admin.VocabulariesManager;
 import net.sibcolombia.sibsp.service.portal.ResourceManager;
 import net.sibcolombia.sibsp.service.registry.RegistryManager;
 import net.sibcolombia.sibsp.struts2.SimpleTextProvider;
+import org.apache.commons.io.FileUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.xml.sax.SAXException;
 
 
 public class ResourceManagerImpl extends BaseManager implements ResourceManager {
 
-  private Resource resource;
   // key=shortname in lower case, value=resource
   private final Map<String, Resource> resources = new HashMap<String, Resource>();
   public static final String PERSISTENCE_FILE = "resource.xml";
-  private final XStream xstream = new XStream();
-  public static final String RESOURCE_IDENTIFIER_LINK_PART = "/resource.do?id=";
   private static final String RESOURCE_OCURRENCE_NAME = "http://rs.tdwg.org/dwc/terms/Occurrence";
   private final ExtensionManager extensionManager;
 
@@ -85,9 +72,7 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
   private final RegistryManager registryManager;
   private final VocabulariesManager vocabularyManager;
   private final SimpleTextProvider textProvider;
-  private ExtensionMapping mapping;
-  private ExtensionProperty coreid;
-  private PropertyMapping mappingCoreid;
+  private final XStream xstream = new XStream();
 
   @Inject
   public ResourceManagerImpl(ApplicationConfig config, DataDir dataDir, SimpleTextProvider simpleTextProvider,
@@ -101,60 +86,41 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
   }
 
   private void addResource(Resource res) {
-    resources.put(res.getShortname().toLowerCase(), res);
+    resources.put(res.getUniqueID().toString(), res);
+  }
+
+  public synchronized void closeWriter(Writer writer) {
+    if (writer != null) {
+      try {
+        writer.close();
+      } catch (IOException e) {
+        log.error(e);
+      }
+    }
   }
 
   @Override
-  public void create(File sourceFile, String fileName, String onlyFileName, String onlyFileExtension,
-    BaseAction createEmlAction) throws InvalidFormatException, IOException {
-    ActionLogger actionLogger = new ActionLogger(this.log, createEmlAction);
-    if (isEmlOnly(onlyFileName)) {
-      // Process template with metadata only workbook
-      this.resource = processMetadataSpreadsheetPart(sourceFile, fileName, actionLogger);
-      saveEml(fileName);
-      sourceFile.delete();
-    } else if (isBasicOcurrenceOnly(onlyFileName)) {
-      // Process template with metadata and basic data of ocurrence file
-      this.resource = processMetadataSpreadsheetPart(sourceFile, fileName, actionLogger);
-      // Get the extension to use for mapper
-      Extension extension = extensionManager.get(RESOURCE_OCURRENCE_NAME);
-      if (extension != null) {
-        mapping = new ExtensionMapping();
-        mapping.setExtension(extension);
+  public Resource create(UUID uniqueID) {
+    Resource resource = null;
+    if (uniqueID != null) {
+      resource = new Resource();
+      resource.setUniqueID(uniqueID);
+      resource.setCreated(new Date());
+      try {
+        save(resource);
+        log.info("Created resource " + resource.getUniqueID().toString());
+      } catch (InvalidConfigException e) {
+        log.error("Error creating resource", e);
+        return null;
       }
-      if (mapping != null || mapping.getExtension() != null) {
-        // set empty filter if not existing
-        if (mapping.getFilter() == null) {
-          mapping.setFilter(new RecordFilter());
-        }
-        String coreRowType = mapping.getExtension().getRowType();
-        // setup the core record id term
-        String coreIdTerm = Constants.DWC_OCCURRENCE_ID;
-        if (coreRowType.equalsIgnoreCase(Constants.DWC_ROWTYPE_TAXON)) {
-          coreIdTerm = Constants.DWC_TAXON_ID;
-        }
-        coreid = extensionManager.get(coreRowType).getProperty(coreIdTerm);
-        mappingCoreid = mapping.getField(coreid.getQualname());
-        if (mappingCoreid == null) {
-          // no, create bare mapping field
-          mappingCoreid = new PropertyMapping();
-          mappingCoreid.setTerm(coreid);
-          mappingCoreid.setIndex(mapping.getIdColumn());
-        }
-      }
-    } else {
-      // Process template with metadata and taxonomy file
     }
+    return resource;
   }
 
-  public URL getResourceLink(String shortname) {
-    URL url = null;
-    try {
-      url = new URL(config.getRootURL() + RESOURCE_IDENTIFIER_LINK_PART + shortname);
-    } catch (MalformedURLException e) {
-      log.error(e);
-    }
-    return url;
+  @Override
+  public void delete(Resource resource) throws IOException {
+    // remove object
+    resources.remove(resource.getUniqueID().toString());
   }
 
   /**
@@ -179,148 +145,6 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
     return resource;
   }
 
-  private boolean isBasicOcurrenceOnly(String onlyFileName) {
-    if (onlyFileName.equalsIgnoreCase("DwC_min_elements_template_version_1.0")) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  private boolean isEmlOnly(String onlyFileName) {
-    if (onlyFileName.equalsIgnoreCase("GMP_template_version_1.0")) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  @Override
-  public List<Resource> list() {
-    return new ArrayList<Resource>(resources.values());
-  }
-
-  @Override
-  public int load() {
-    File resourcesDir = dataDir.dataFile(DataDir.RESOURCES_DIR);
-    resources.clear();
-    int counter = 0;
-    if (resourcesDir != null) {
-      File[] resources = resourcesDir.listFiles();
-      if (resources != null) {
-        for (File resourceDir : resources) {
-          if (resourceDir.isDirectory()) {
-            try {
-              addResource(loadFromDir(resourceDir));
-              counter++;
-            } catch (InvalidConfigException e) {
-              log.error("Cant load resource " + resourceDir.getName(), e);
-            }
-          }
-        }
-        log.info("Loaded " + counter + " resources into memory alltogether.");
-      } else {
-        log.info("Data directory does not hold a resources directory: " + dataDir.dataFile(""));
-      }
-    } else {
-      log.info("Data directory does not hold a resources directory: " + dataDir.dataFile(""));
-    }
-    return counter;
-  }
-
-  private Eml loadEml(Resource resource) {
-    File emlFile = dataDir.resourceEmlFile(resource.getShortname(), null);
-    Eml eml = null;
-    try {
-      InputStream in = new FileInputStream(emlFile);
-      eml = EmlFactory.build(in);
-    } catch (FileNotFoundException e) {
-      eml = new Eml();
-    } catch (IOException e) {
-      log.error(e);
-    } catch (SAXException e) {
-      log.error("Invalid EML document", e);
-      eml = new Eml();
-    } catch (Exception e) {
-      eml = new Eml();
-    }
-    resource.setEml(eml);
-    syncEmlWithResource(resource);
-    return eml;
-  }
-
-  /**
-   * Calls loadFromDir(File, ActionLogger), inserting a new instance of ActionLogger.
-   * 
-   * @param resourceDir resource directory
-   * @return loaded Resource
-   */
-  private Resource loadFromDir(File resourceDir) {
-    return loadFromDir(resourceDir, new ActionLogger(log, new BaseAction(textProvider, config)));
-  }
-
-  /**
-   * Reads a complete resource configuration (resource config & eml) from the resource config folder
-   * and returns the Resource instance for the internal in memory cache.
-   */
-  private Resource loadFromDir(File resourceDir, ActionLogger alog) throws InvalidConfigException {
-    if (resourceDir.exists()) {
-      // load full configuration from resource.xml and eml.xml files
-      String shortname = resourceDir.getName();
-      try {
-        File cfgFile = dataDir.resourceFile(shortname, PERSISTENCE_FILE);
-        InputStream input = new FileInputStream(cfgFile);
-        Resource resource = (Resource) xstream.fromXML(input);
-        // non existing users end up being a NULL in the set, so remove them
-        // shouldnt really happen - but people can even manually cause a mess
-        resource.getManagers().remove(null);
-
-        // non existent Extension end up being NULL
-        // for ex, a user is trying to import a resource from one IPT to another without all required exts installed.
-        for (ExtensionMapping ext : resource.getMappings()) {
-          Extension x = ext.getExtension();
-          if (x == null) {
-            alog.warn("manage.resource.create.extension.null");
-            throw new InvalidConfigException(TYPE.INVALID_EXTENSION, "Resource references non-existent extension");
-          } else if (extensionManager.get(x.getRowType()) == null) {
-            alog.warn("manage.resource.create.rowType.null", new String[] {x.getRowType()});
-            throw new InvalidConfigException(TYPE.INVALID_EXTENSION, "Resource references non-installed extension");
-          }
-        }
-
-        // shortname persists as folder name, so xstream doesnt handle this:
-        resource.setShortname(shortname);
-
-        // infer coreType if null
-        if (resource.getCoreType() == null) {
-          inferCoreType(resource);
-        }
-
-        // standardize subtype if not null
-        if (resource.getSubtype() != null) {
-          standardizeSubtype(resource);
-        }
-
-        // add proper source file pointer
-        for (Source src : resource.getSources()) {
-          src.setResource(resource);
-          if (src instanceof FileSource) {
-            ((FileSource) src).setFile(dataDir.sourceFile(resource, src));
-          }
-        }
-        // load eml
-        loadEml(resource);
-        log.debug("Read resource configuration for " + shortname);
-        return resource;
-      } catch (FileNotFoundException e) {
-        log.error("Cannot read resource configuration for " + shortname, e);
-        throw new InvalidConfigException(TYPE.RESOURCE_CONFIG, "Cannot read resource configuration for " + shortname
-          + ": " + e.getMessage());
-      }
-    }
-    return null;
-  }
-
   /**
    * Process template file to generate an EML XML file
    * 
@@ -329,7 +153,8 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
    * @throws IOException
    * @throws InvalidFormatException
    */
-  private Resource processMetadataSpreadsheetPart(File sourceFile, String fileName, ActionLogger actionLogger)
+  @Override
+  public Resource processMetadataSpreadsheetPart(File sourceFile, String fileName, ActionLogger actionLogger)
     throws InvalidFormatException, IOException, NullPointerException {
     Resource resource = new Resource();
     Eml eml = new Eml();
@@ -808,11 +633,56 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
     eml.setTemporalCoverages(temporalCoverages);
   }
 
+  @Override
+  public synchronized void save(Resource resource) throws InvalidConfigException {
+    File cfgFile = dataDir.resourceFile(resource, PERSISTENCE_FILE);
+    Writer writer = null;
+    try {
+      // make sure resource dir exists
+      FileUtils.forceMkdir(cfgFile.getParentFile());
+      // persist data
+      writer = org.gbif.ipt.utils.FileUtils.startNewUtf8File(cfgFile);
+      xstream.toXML(resource, writer);
+      // add to internal map
+      addResource(resource);
+    } catch (IOException e) {
+      log.error(e);
+      throw new InvalidConfigException(TYPE.CONFIG_WRITE, "Can't write mapping configuration");
+    } finally {
+      if (writer != null) {
+        closeWriter(writer);
+      }
+      System.gc();
+    }
+  }
+
+  /*
+   * (non-Javadoc)
+   * @see org.gbif.ipt.service.manage.ResourceManager#save(java.lang.String, org.gbif.metadata.eml.Eml)
+   */
+  @Override
+  public synchronized void saveEml(Resource resource) throws InvalidConfigException {
+    // save into data dir
+    File emlFile = dataDir.resourceEmlFile(resource.getUniqueID().toString(), null);
+    try {
+      EmlWriter.writeEmlFile(emlFile, resource.getEml());
+      log.debug("Updated EML file for " + resource);
+    } catch (IOException e) {
+      log.error(e);
+      throw new InvalidConfigException(TYPE.CONFIG_WRITE, "IO exception when writing eml for " + resource);
+    } catch (TemplateException e) {
+      log.error("EML template exception", e);
+      throw new InvalidConfigException(TYPE.EML, "EML template exception when writing eml for " + resource + ": "
+        + e.getMessage());
+    }
+  }
+
   private void saveEml(String fileName) {
     // save into data dir
     File emlFile = dataDir.resourceEmlFile(fileName, null);
 
     try {
+      Resource resource = null;
       EmlWriter.writeEmlFile(emlFile, resource.getEml());
       log.debug("Updated EML file for " + resource);
     } catch (IOException e) {
@@ -853,16 +723,6 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
       }
     }
     return resource;
-  }
-
-  private void syncEmlWithResource(Resource resource) {
-    resource.getEml().setEmlVersion(resource.getEmlVersion());
-    // we need some GUID. If we have use the registry key, if not use the resource URL
-    if (resource.getKey() != null) {
-      resource.getEml().setGuid(resource.getKey().toString());
-    } else {
-      resource.getEml().setGuid(getResourceLink(resource.getShortname()).toString());
-    }
   }
 
 }

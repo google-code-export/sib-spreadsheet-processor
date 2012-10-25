@@ -1,16 +1,19 @@
 package net.sibcolombia.sibsp.action.portal;
 
+import org.gbif.ipt.utils.ActionLogger;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.UUID;
 
 import com.google.inject.Inject;
-import net.sibcolombia.sibsp.action.POSTAction;
 import net.sibcolombia.sibsp.configuration.ApplicationConfig;
 import net.sibcolombia.sibsp.configuration.DataDir;
+import net.sibcolombia.sibsp.model.Resource;
 import net.sibcolombia.sibsp.service.InvalidFileExtension;
 import net.sibcolombia.sibsp.service.InvalidFileName;
 import net.sibcolombia.sibsp.service.portal.ResourceManager;
@@ -20,7 +23,7 @@ import org.apache.log4j.Logger;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
 
-public class CreateResourceAction extends POSTAction {
+public class CreateResourceAction extends ManagerBaseAction {
 
   private static final long serialVersionUID = 3310022370019075108L;
 
@@ -40,9 +43,9 @@ public class CreateResourceAction extends POSTAction {
 
 
   @Inject
-  public CreateResourceAction(SimpleTextProvider textProvider, ApplicationConfig cfg, ResourceManager resourceManager,
-    DataDir dataDir) {
-    super(textProvider, cfg);
+  public CreateResourceAction(SimpleTextProvider textProvider, ApplicationConfig config,
+    ResourceManager resourceManager, DataDir dataDir) {
+    super(textProvider, config, resourceManager);
     this.resourceManager = resourceManager;
     this.dataDir = dataDir;
   }
@@ -62,12 +65,72 @@ public class CreateResourceAction extends POSTAction {
     return shortname;
   }
 
+  private boolean isBasicOcurrenceOnly() {
+    if (onlyFileName.equalsIgnoreCase("DwC_min_elements_template_version_1.0")) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  private boolean isEmlOnly() {
+    if (onlyFileName.equalsIgnoreCase("GMP_template_version_1.0")) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   @Override
   public String save() throws IOException {
+    ActionLogger actionLogger = new ActionLogger(this.log, this);
     try {
       File tmpFile = uploadToTmp();
       if (tmpFile != null) {
-        resourceManager.create(tmpFile, fileFileName, onlyFileName, onlyFileExtension, this);
+        if (isEmlOnly()) {
+          // Process template with metadata only workbook
+          UUID uniqueID = UUID.randomUUID();
+          Resource resource = resourceManager.processMetadataSpreadsheetPart(tmpFile, fileFileName, actionLogger);
+          resource.setUniqueID(uniqueID);
+          resourceManager.save(resource);
+          resourceManager.saveEml(resource);
+          tmpFile.delete();
+        } else if (isBasicOcurrenceOnly()) {
+          /*
+           * // Process template with metadata and basic data of ocurrence file
+           * this.resource = processMetadataSpreadsheetPart(sourceFile, fileName, actionLogger);
+           * // Get the extension to use for mapper
+           * Extension extension = extensionManager.get(RESOURCE_OCURRENCE_NAME);
+           * if (extension != null) {
+           * mapping = new ExtensionMapping();
+           * mapping.setExtension(extension);
+           * }
+           * if (mapping != null || mapping.getExtension() != null) {
+           * // set empty filter if not existing
+           * if (mapping.getFilter() == null) {
+           * mapping.setFilter(new RecordFilter());
+           * }
+           * String coreRowType = mapping.getExtension().getRowType();
+           * // setup the core record id term
+           * String coreIdTerm = Constants.DWC_OCCURRENCE_ID;
+           * if (coreRowType.equalsIgnoreCase(Constants.DWC_ROWTYPE_TAXON)) {
+           * coreIdTerm = Constants.DWC_TAXON_ID;
+           * }
+           * coreid = extensionManager.get(coreRowType).getProperty(coreIdTerm);
+           * mappingCoreid = mapping.getField(coreid.getQualname());
+           * if (mappingCoreid == null) {
+           * // no, create bare mapping field
+           * mappingCoreid = new PropertyMapping();
+           * mappingCoreid.setTerm(coreid);
+           * mappingCoreid.setIndex(mapping.getIdColumn());
+           * }
+           * }
+           */
+        } else {
+          // Process template with metadata and taxonomy file
+        }
+
+        // resourceManager.create(tmpFile, fileFileName, onlyFileName, onlyFileExtension, this);
         log.info("File uploaded");
       } else {
         log.error("Error no file to upload");
