@@ -1,9 +1,10 @@
 package net.sibcolombia.sibsp.action.portal;
 
+import net.sibcolombia.sibsp.service.portal.ResourceManager;
+
 import com.google.inject.Inject;
 import net.sibcolombia.sibsp.action.BaseAction;
 import net.sibcolombia.sibsp.configuration.ApplicationConfig;
-import net.sibcolombia.sibsp.interfaces.ResourceManager;
 import net.sibcolombia.sibsp.struts2.SimpleTextProvider;
 
 

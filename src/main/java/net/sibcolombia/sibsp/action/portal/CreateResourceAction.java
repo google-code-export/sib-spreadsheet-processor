@@ -11,9 +11,9 @@ import com.google.inject.Inject;
 import net.sibcolombia.sibsp.action.POSTAction;
 import net.sibcolombia.sibsp.configuration.ApplicationConfig;
 import net.sibcolombia.sibsp.configuration.DataDir;
-import net.sibcolombia.sibsp.interfaces.ResourceManager;
 import net.sibcolombia.sibsp.service.InvalidFileExtension;
 import net.sibcolombia.sibsp.service.InvalidFileName;
+import net.sibcolombia.sibsp.service.portal.ResourceManager;
 import net.sibcolombia.sibsp.struts2.SimpleTextProvider;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
@@ -172,6 +172,9 @@ public class CreateResourceAction extends POSTAction {
       return false;
     } else {
       if (onlyFileName.equalsIgnoreCase("GMP_template_version_1.0")) {
+        return true;
+      }
+      if (onlyFileName.equalsIgnoreCase("DwC_min_elements_template_version_1.0")) {
         return true;
       } else {
         return false;

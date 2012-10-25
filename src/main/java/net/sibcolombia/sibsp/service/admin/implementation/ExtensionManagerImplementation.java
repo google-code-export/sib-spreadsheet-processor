@@ -17,6 +17,8 @@ import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import net.sibcolombia.sibsp.service.portal.ResourceManager;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.sibcolombia.sibsp.action.BaseAction;
@@ -24,7 +26,6 @@ import net.sibcolombia.sibsp.configuration.ApplicationConfig;
 import net.sibcolombia.sibsp.configuration.ConfigWarnings;
 import net.sibcolombia.sibsp.configuration.Constants;
 import net.sibcolombia.sibsp.configuration.DataDir;
-import net.sibcolombia.sibsp.interfaces.ResourceManager;
 import net.sibcolombia.sibsp.model.Extension;
 import net.sibcolombia.sibsp.model.Resource;
 import net.sibcolombia.sibsp.model.factory.ExtensionFactory;

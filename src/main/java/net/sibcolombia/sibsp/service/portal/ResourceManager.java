@@ -1,13 +1,15 @@
-package net.sibcolombia.sibsp.interfaces;
+package net.sibcolombia.sibsp.service.portal;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import net.sibcolombia.sibsp.service.portal.implementation.ResourceManagerImpl;
+
+
 import com.google.inject.ImplementedBy;
 import net.sibcolombia.sibsp.action.BaseAction;
 import net.sibcolombia.sibsp.model.Resource;
-import net.sibcolombia.sibsp.service.ResourceManagerImpl;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
 /**
