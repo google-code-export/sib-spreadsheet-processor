@@ -17,8 +17,6 @@ import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import net.sibcolombia.sibsp.service.portal.ResourceManager;
-
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.sibcolombia.sibsp.action.BaseAction;
@@ -27,15 +25,13 @@ import net.sibcolombia.sibsp.configuration.ConfigWarnings;
 import net.sibcolombia.sibsp.configuration.Constants;
 import net.sibcolombia.sibsp.configuration.DataDir;
 import net.sibcolombia.sibsp.model.Extension;
-import net.sibcolombia.sibsp.model.Resource;
 import net.sibcolombia.sibsp.model.factory.ExtensionFactory;
 import net.sibcolombia.sibsp.service.BaseManager;
-import net.sibcolombia.sibsp.service.DeletionNotAllowedException;
-import net.sibcolombia.sibsp.service.DeletionNotAllowedException.Reason;
 import net.sibcolombia.sibsp.service.InvalidConfigException;
 import net.sibcolombia.sibsp.service.InvalidConfigException.TYPE;
 import net.sibcolombia.sibsp.service.RegistryException;
 import net.sibcolombia.sibsp.service.admin.ExtensionManager;
+import net.sibcolombia.sibsp.service.portal.ResourceManager;
 import net.sibcolombia.sibsp.service.registry.RegistryManager;
 import net.sibcolombia.sibsp.struts2.SimpleTextProvider;
 import org.apache.commons.io.FileUtils;
@@ -132,30 +128,6 @@ public class ExtensionManagerImplementation extends BaseManager implements Exten
     }
 
     return rowType;
-  }
-
-  @Override
-  public void delete(String rowType) throws DeletionNotAllowedException {
-    if (extensionsByRowtype.containsKey(rowType)) {
-      // check if its used by some resources
-      for (Resource r : resourceManager.list()) {
-        if (!r.getMappings(rowType).isEmpty()) {
-          String msg = "Extension mapped in resource " + r.getShortname();
-          log.warn(msg);
-          throw new DeletionNotAllowedException(Reason.EXTENSION_MAPPED, msg);
-        }
-      }
-      // delete
-      extensionsByRowtype.remove(rowType);
-      File f = getExtensionFile(rowType);
-      if (f.exists()) {
-        f.delete();
-      } else {
-        log.warn("Extension doesnt exist locally, cant delete " + rowType);
-      }
-    } else {
-      log.warn("Extension not installed locally, cant delete " + rowType);
-    }
   }
 
   @Override

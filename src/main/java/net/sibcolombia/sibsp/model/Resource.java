@@ -4,6 +4,7 @@ import org.gbif.metadata.eml.Eml;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,7 +23,7 @@ public class Resource {
   private String fileName;
   private String coreType;
   private String subtype;
-  private String shortname; // unique
+  private UUID uniqueID;
   private final int emlVersion = 0;
   private final Set<User> managers = new HashSet<User>();
   // mapping configs
@@ -31,6 +32,7 @@ public class Resource {
   private UUID key;
 
   private final List<ExtensionMapping> mappings = new ArrayList<ExtensionMapping>();
+  private Date created;
 
 
   public List<ExtensionMapping> getCoreMappings() {
@@ -60,6 +62,10 @@ public class Resource {
 
   public String getCoreType() {
     return coreType;
+  }
+
+  public Date getCreated() {
+    return created;
   }
 
   public Eml getEml() {
@@ -106,10 +112,6 @@ public class Resource {
     return maps;
   }
 
-  public String getShortname() {
-    return shortname;
-  }
-
   public List<Source> getSources() {
     List<Source> srcs = new ArrayList<Source>(sources);
     Collections.sort(srcs);
@@ -120,8 +122,16 @@ public class Resource {
     return subtype;
   }
 
+  public UUID getUniqueID() {
+    return uniqueID;
+  }
+
   public void setCoreType(String coreType) {
     this.coreType = Strings.isNullOrEmpty(coreType) ? null : coreType;
+  }
+
+  public void setCreated(Date created) {
+    this.created = created;
   }
 
   public void setEml(Eml eml) {
@@ -132,13 +142,6 @@ public class Resource {
     this.fileName = fileName;
   }
 
-  public void setShortname(String shortname) {
-    this.shortname = shortname;
-    if (eml != null && eml.getTitle() == null) {
-      eml.setTitle(shortname);
-    }
-  }
-
   /**
    * Sets the resource subtype. If it is null or an empty string, it is set to null. Otherwise, it is simply set
    * in lowercase.
@@ -147,6 +150,10 @@ public class Resource {
    */
   public void setSubtype(String subtype) {
     this.subtype = (Strings.isNullOrEmpty(subtype)) ? null : subtype.toLowerCase();
+  }
+
+  public void setUniqueID(UUID uniqueID) {
+    this.uniqueID = uniqueID;
   }
 
   @Override

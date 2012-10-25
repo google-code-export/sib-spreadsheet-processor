@@ -13,8 +13,6 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.List;
 
-import net.sibcolombia.sibsp.service.portal.ResourceManager;
-
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.sibcolombia.sibsp.interfaces.ConfigurationManager;
@@ -24,6 +22,7 @@ import net.sibcolombia.sibsp.service.InvalidConfigException;
 import net.sibcolombia.sibsp.service.InvalidConfigException.TYPE;
 import net.sibcolombia.sibsp.service.admin.ExtensionManager;
 import net.sibcolombia.sibsp.service.admin.VocabulariesManager;
+import net.sibcolombia.sibsp.service.portal.ResourceManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -144,9 +143,6 @@ public class ConfigurationManagerImplementation extends BaseManager implements C
 
     log.info("Loading dwc extensions ...");
     extensionManager.load();
-
-    log.info("Loading resource configurations ...");
-    resourceManager.load();
 
     List<Extension> list = extensionManager.listCore();
 

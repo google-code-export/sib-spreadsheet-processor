@@ -163,6 +163,13 @@ public class DataDir {
     return dataFile(RESOURCES_DIR + "/" + resourceName + "/" + fn);
   }
 
+  public File resourceFile(Resource resource, String path) {
+    if (resource == null) {
+      return null;
+    }
+    return resourceFile(resource.getUniqueID().toString(), path);
+  }
+
   /**
    * Constructs an absolute path to a file within a resource folder inside the data dir
    * 
@@ -240,7 +247,7 @@ public class DataDir {
     if (resource == null) {
       return null;
     }
-    return resourceFile(resource.getShortname(), "sources/" + source.getName() + ".txt");
+    return resourceFile(resource.getUniqueID().toString(), "sources/" + source.getName() + ".txt");
   }
 
   public File tmpDir() {
