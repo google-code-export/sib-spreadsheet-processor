@@ -21,7 +21,7 @@ import org.apache.log4j.Logger;
 @Singleton
 public class DataDir {
 
-  private static final String CONFIG_DIR = "config";
+  public static final String CONFIG_DIR = "config";
   public static final String RESOURCES_DIR = "resources";
   public static final String TMP_DIR = "temp";
   public static final String LOGGING_DIR = "logs";
@@ -153,6 +153,10 @@ public class DataDir {
     log.info("SiB-SP DataDir location file in /WEB-INF changed to " + dataDir.getAbsolutePath());
   }
 
+  public File resourceDwcaFile(String resourceName) {
+    return dataFile(RESOURCES_DIR + "/" + resourceName + "/dwca.zip");
+  }
+
   public File resourceEmlFile(String resourceName, @Nullable Integer version) {
     String fn;
     if (version == null) {
@@ -177,6 +181,28 @@ public class DataDir {
    */
   public File resourceFile(String resourceName, String path) {
     return dataFile(RESOURCES_DIR + "/" + resourceName + "/" + path);
+  }
+
+  public File resourcePublicationLogFile(String resourceName) {
+    return dataFile(RESOURCES_DIR + "/" + resourceName + "/publication.log");
+  }
+
+  /**
+   * File for the only & current rtf file representing the eml metadata for data publishers in RTF format.
+   */
+  public File resourceRtfFile(String resourceName) {
+    String fn = resourceName + ".rtf";
+    return dataFile(RESOURCES_DIR + "/" + resourceName + "/" + fn);
+  }
+
+  public File resourceRtfFile(String resourceName, @Nullable Integer version) {
+    String fn;
+    if (version == null) {
+      fn = "filertf.rtf";
+    } else {
+      fn = "filertf" + "-" + version + ".rtf";
+    }
+    return dataFile(RESOURCES_DIR + "/" + resourceName + "/" + fn);
   }
 
   /**
@@ -247,7 +273,11 @@ public class DataDir {
     if (resource == null) {
       return null;
     }
-    return resourceFile(resource.getUniqueID().toString(), "sources/" + source.getName() + ".txt");
+    return resourceFile(resource.getUniqueID().toString(), "sources/" + source.getName() + ".xls");
+  }
+
+  public File sourceLogFile(String resourceName, String sourceName) {
+    return dataFile(RESOURCES_DIR + "/" + resourceName + "/sources/" + sourceName + ".log");
   }
 
   public File tmpDir() {
@@ -270,4 +300,5 @@ public class DataDir {
     UUID idOne = UUID.randomUUID();
     return tmpFile(prefix + idOne.toString() + fileFileName);
   }
+
 }

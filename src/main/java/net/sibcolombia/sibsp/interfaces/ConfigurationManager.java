@@ -18,6 +18,15 @@ public interface ConfigurationManager {
   String getHostName();
 
   /**
+   * Loads all in memory configuration persisting in the datadir.This is:
+   * - main IPT configuration, AppConfig
+   * - user accounts
+   * - list of configured resources
+   * - reload lucene indices
+   */
+  void loadDataDirConfig() throws InvalidConfigException;
+
+  /**
    * Persists the main SiB-SP AppConfig configuration which can be modified for simple properties independently of this
    * manager as its a singleton.
    * Highly recommended is to use the setConfigProperty method in this manager though to edit the configuration.

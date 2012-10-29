@@ -1,5 +1,10 @@
 package net.sibcolombia.sibsp.service.portal.implementation;
 
+import org.gbif.ipt.task.Eml2Rtf;
+import org.gbif.ipt.task.GenerateDwca;
+import org.gbif.ipt.task.GenerateDwcaFactory;
+import org.gbif.ipt.task.ReportHandler;
+import org.gbif.ipt.task.StatusReport;
 import org.gbif.ipt.utils.ActionLogger;
 import org.gbif.metadata.eml.Address;
 import org.gbif.metadata.eml.Agent;
@@ -19,7 +24,10 @@ import org.gbif.metadata.eml.TaxonomicCoverage;
 import org.gbif.metadata.eml.TemporalCoverage;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Writer;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -32,8 +40,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import com.google.inject.Inject;
+import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.rtf.RtfWriter2;
 import com.thoughtworks.xstream.XStream;
 import freemarker.template.TemplateException;
 import net.sibcolombia.sibsp.action.BaseAction;
@@ -45,6 +60,7 @@ import net.sibcolombia.sibsp.model.Resource.CoreRowType;
 import net.sibcolombia.sibsp.service.BaseManager;
 import net.sibcolombia.sibsp.service.InvalidConfigException;
 import net.sibcolombia.sibsp.service.InvalidConfigException.TYPE;
+import net.sibcolombia.sibsp.service.PublicationException;
 import net.sibcolombia.sibsp.service.admin.ExtensionManager;
 import net.sibcolombia.sibsp.service.admin.VocabulariesManager;
 import net.sibcolombia.sibsp.service.portal.ResourceManager;
@@ -58,8 +74,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 
-
-public class ResourceManagerImpl extends BaseManager implements ResourceManager {
+public class ResourceManagerImplementation extends BaseManager implements ResourceManager, ReportHandler {
 
   // key=shortname in lower case, value=resource
   private final Map<String, Resource> resources = new HashMap<String, Resource>();
@@ -73,15 +88,24 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
   private final VocabulariesManager vocabularyManager;
   private final SimpleTextProvider textProvider;
   private final XStream xstream = new XStream();
+  private final Map<String, StatusReport> processReports = new HashMap<String, StatusReport>();
+
+  private final Eml2Rtf eml2Rtf;
+
+  private GenerateDwcaFactory dwcaFactory;
+  private ThreadPoolExecutor executor;
+  private final Map<String, Future<Integer>> processFutures = new HashMap<String, Future<Integer>>();
 
   @Inject
-  public ResourceManagerImpl(ApplicationConfig config, DataDir dataDir, SimpleTextProvider simpleTextProvider,
-    RegistryManager registryManager, ExtensionManager extensionManager, VocabulariesManager vocabularyManager) {
+  public ResourceManagerImplementation(ApplicationConfig config, DataDir dataDir,
+    SimpleTextProvider simpleTextProvider, RegistryManager registryManager, ExtensionManager extensionManager,
+    VocabulariesManager vocabularyManager, Eml2Rtf eml2Rtf) {
     super(config, dataDir);
     this.extensionManager = extensionManager;
     this.registryManager = registryManager;
     this.vocabularyManager = vocabularyManager;
     this.textProvider = simpleTextProvider;
+    this.eml2Rtf = eml2Rtf;
     baseAction = new BaseAction(simpleTextProvider, config);
   }
 
@@ -123,6 +147,22 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
     resources.remove(resource.getUniqueID().toString());
   }
 
+  private void generateDwca(Resource resource) {
+    // use threads to run in the background as sql sources might take a long time
+    GenerateDwca worker = dwcaFactory.create(resource, this);
+    Future<Integer> f = executor.submit(worker);
+    processFutures.put(resource.getUniqueID().toString(), f);
+    // make sure we have at least a first report for this resource
+    worker.report();
+  }
+
+  public Resource get(String shortname) {
+    if (shortname == null) {
+      return null;
+    }
+    return resources.get(shortname.toLowerCase());
+  }
+
   /**
    * The resource's coreType could be null. This could happen because before 2.0.3 it was not saved to resource.xml.
    * During upgrades to 2.0.3, a bug in MetadataAction would (wrongly) automatically set the coreType:
@@ -143,6 +183,37 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
       // don't do anything - no taxon or occurrence mapping has been done yet
     }
     return resource;
+  }
+
+  /**
+   * Checks if a resource is locked due some background processing.
+   * While doing so it checks the known futures for completion.
+   * If completed the resource is updated with the status messages and the lock is removed.
+   */
+  public boolean isLocked(String shortname) {
+    if (processFutures.containsKey(shortname)) {
+      // is listed as locked but task might be finished, check
+      Future<Integer> f = processFutures.get(shortname);
+      if (f.isDone()) {
+        try {
+          Integer coreRecords = f.get();
+          Resource res = get(shortname);
+          res.setRecordsPublished(coreRecords);
+          save(res);
+          return false;
+        } catch (InterruptedException e) {
+          log.info("Process interrupted for resource " + shortname);
+        } catch (CancellationException e) {
+          log.info("Process canceled for resource " + shortname);
+        } catch (ExecutionException e) {
+          log.error("Process for resource " + shortname + " aborted due to error: " + e.getMessage());
+        } finally {
+          processFutures.remove(shortname);
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -178,6 +249,92 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
     resource.setEml(eml);
 
     return resource;
+  }
+
+  @Override
+  public boolean publish(Resource resource, BaseAction action) throws PublicationException {
+    // update eml pubDate (represents date when the resource was last published)
+    resource.getEml().setPubDate(new Date());
+
+    // publish EML as well as RTF
+    publishMetadata(resource, action);
+
+    // regenerate dwca asynchronously
+    boolean dwca = false;
+
+    if (resource.hasMappedData()) {
+      generateDwca(resource);
+      dwca = true;
+    } else {
+      resource.setRecordsPublished(0);
+    }
+    // persist any resource object changes
+    resource.setLastPublished(new Date());
+    save(resource);
+
+    return dwca;
+  }
+
+  @Override
+  public void publishMetadata(Resource resource, BaseAction action) throws PublicationException {
+    ActionLogger alog = new ActionLogger(this.log, action);
+
+    // increase eml version
+    int version = resource.getEmlVersion();
+    version++;
+    resource.setEmlVersion(version);
+
+    // save all changes to Eml
+    saveEml(resource);
+
+    // copy stable version of the eml file
+    File trunkFile = dataDir.resourceEmlFile(resource.getUniqueID().toString(), null);
+    File versionedFile = dataDir.resourceEmlFile(resource.getUniqueID().toString(), version);
+    try {
+      FileUtils.copyFile(trunkFile, versionedFile);
+    } catch (IOException e) {
+      alog.error("Can't publish resource " + resource.getUniqueID().toString(), e);
+      throw new PublicationException(PublicationException.TYPE.EML, "Can't publish eml file for resource "
+        + resource.getUniqueID().toString(), e);
+    }
+    // publish also as RTF
+    publishRtf(resource, action);
+
+    // copy current rtf version.
+    File trunkRtfFile = dataDir.resourceRtfFile(resource.getUniqueID().toString());
+    File versionedRtfFile = dataDir.resourceRtfFile(resource.getUniqueID().toString(), version);
+    try {
+      FileUtils.copyFile(trunkRtfFile, versionedRtfFile);
+    } catch (IOException e) {
+      alog.error("Can't publish resource " + resource.getUniqueID().toString() + "as RTF", e);
+      throw new PublicationException(PublicationException.TYPE.EML, "Can't publish rtf file for resource "
+        + resource.getUniqueID().toString(), e);
+    }
+  }
+
+  /**
+   * Publishes RTF file. Uses Eml2RTF writer to carry out the work.
+   * 
+   * @param resource Resource
+   * @param action Action
+   */
+  private void publishRtf(Resource resource, BaseAction action) {
+    ActionLogger alog = new ActionLogger(this.log, action);
+
+    Document doc = new Document();
+    File rtfFile = dataDir.resourceRtfFile(resource.getUniqueID().toString());
+    try {
+      OutputStream out = new FileOutputStream(rtfFile);
+      RtfWriter2.getInstance(doc, out);
+      eml2Rtf.writeEmlIntoRtf(doc, resource);
+      out.close();
+    } catch (FileNotFoundException e) {
+      alog.error("Cant find rtf file to write metadata to: " + rtfFile.getAbsolutePath(), e);
+    } catch (DocumentException e) {
+      alog.error("RTF DocumentException while writing to file " + rtfFile.getAbsolutePath(), e);
+    } catch (IOException e) {
+      alog.error("Cant write to rtf file " + rtfFile.getAbsolutePath(), e);
+    }
   }
 
   private void readAdditionalMetadata(Eml eml, Workbook template) throws InvalidFormatException {
@@ -634,6 +791,11 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
   }
 
   @Override
+  public synchronized void report(String shortname, StatusReport report) {
+    processReports.put(shortname, report);
+  }
+
+  @Override
   public synchronized void save(Resource resource) throws InvalidConfigException {
     File cfgFile = dataDir.resourceFile(resource, PERSISTENCE_FILE);
     Writer writer = null;
@@ -723,6 +885,11 @@ public class ResourceManagerImpl extends BaseManager implements ResourceManager 
       }
     }
     return resource;
+  }
+
+  public StatusReport status(String shortname) {
+    isLocked(shortname);
+    return processReports.get(shortname);
   }
 
 }

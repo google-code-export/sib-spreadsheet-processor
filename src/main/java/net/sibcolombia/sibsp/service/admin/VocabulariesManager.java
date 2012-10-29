@@ -16,6 +16,14 @@ import net.sibcolombia.sibsp.service.admin.implementation.VocabulariesManagerImp
 public interface VocabulariesManager {
 
   /**
+   * Retrieve vocabulary by its unique global URI identifier from installed vocabularies.
+   * 
+   * @param uriString unique URI string identifying the vocabulary as given in the vocabulary definition
+   * @return the installed vocabulary or null if not found
+   */
+  Vocabulary get(String uriString);
+
+  /**
    * Returns the parsed vocabulary located at the given URI. If downloaded already it will return the cached copy or
    * otherwise download it from the URI.
    * 
@@ -35,7 +43,7 @@ public interface VocabulariesManager {
    * @return return vocabulary map for given language sorted alphabetically, or an empty map if no vocabulary concepts
    *         could be populated
    */
-  Map<String, String> getI18nVocab(String uri, String lang, boolean sortAlphabetically);
+  Map<String, String> getI18nVocab(String uriString, String lang, boolean sortAlphabetically);
 
   /**
    * Lists all locally known vocabularies.

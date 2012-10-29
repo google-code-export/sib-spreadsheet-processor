@@ -46,6 +46,7 @@
         <gson.version>2.2.2</gson.version>
         <jsr305.version>1.3.9</jsr305.version>
         <xstream.version>1.4.3</xstream.version>
+        <itext.version>2.1.7</itext.version>
     </properties>
     
 	<developers>
@@ -345,6 +346,18 @@
 			<groupId>com.thoughtworks.xstream</groupId>
 			<artifactId>xstream</artifactId>
 			<version>${xstream.version}</version>
+		</dependency>
+		
+		<!-- rtf generation -->
+		<dependency>
+			<groupId>com.lowagie</groupId>
+			<artifactId>itext</artifactId>
+			<version>${itext.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.lowagie</groupId>
+			<artifactId>itext-rtf</artifactId>
+			<version>${itext.version}</version>
 		</dependency>
         
     </dependencies>

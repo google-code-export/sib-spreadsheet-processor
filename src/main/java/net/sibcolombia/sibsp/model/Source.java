@@ -273,6 +273,10 @@ public abstract class Source implements Comparable<Source>, Serializable {
     this.name = normaliseName(name);
   }
 
+  public void setNameNoNormalise(String name) {
+    this.name = name;
+  }
+
   public void setReadable(boolean readable) {
     this.readable = readable;
   }

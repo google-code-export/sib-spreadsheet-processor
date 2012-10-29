@@ -11,12 +11,10 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.util.List;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.sibcolombia.sibsp.interfaces.ConfigurationManager;
-import net.sibcolombia.sibsp.model.Extension;
 import net.sibcolombia.sibsp.service.BaseManager;
 import net.sibcolombia.sibsp.service.InvalidConfigException;
 import net.sibcolombia.sibsp.service.InvalidConfigException.TYPE;
@@ -130,13 +128,14 @@ public class ConfigurationManagerImplementation extends BaseManager implements C
     return hostName;
   }
 
-  private void loadDataDirConfig() {
+  @Override
+  public void loadDataDirConfig() throws InvalidConfigException {
     log.info("Reading DATA DIRECTORY: " + dataDir.dataDir.getAbsolutePath());
     log.info("Loading SiB-SP config ...");
     config.loadConfigurationSettings();
 
-    log.info("Reloading log4j settings ...");
-    reloadLogger();
+    // log.info("Reloading log4j settings ...");
+    // reloadLogger();
 
     log.info("Loading vocabularies ...");
     vocabularyManager.load();
@@ -144,12 +143,6 @@ public class ConfigurationManagerImplementation extends BaseManager implements C
     log.info("Loading dwc extensions ...");
     extensionManager.load();
 
-    List<Extension> list = extensionManager.listCore();
-
-    if (list.isEmpty()) {
-      // load all registered extensions from registry, and install core extensions
-      extensionManager.installCoreTypes();
-    }
   }
 
   private void reloadLogger() {
@@ -214,7 +207,6 @@ public class ConfigurationManagerImplementation extends BaseManager implements C
   @Override
   public boolean setDataDir(File dataDir) {
     boolean created = this.dataDir.setDataDir(dataDir);
-    loadDataDirConfig();
     return created;
   }
 
