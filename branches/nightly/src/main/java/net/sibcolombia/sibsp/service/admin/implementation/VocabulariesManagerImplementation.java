@@ -13,9 +13,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,6 +26,7 @@ import java.util.Set;
 import javax.xml.parsers.ParserConfigurationException;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.thoughtworks.xstream.XStream;
 import net.sibcolombia.sibsp.action.BaseAction;
 import net.sibcolombia.sibsp.configuration.ApplicationConfig;
@@ -30,6 +34,8 @@ import net.sibcolombia.sibsp.configuration.ConfigWarnings;
 import net.sibcolombia.sibsp.configuration.Constants;
 import net.sibcolombia.sibsp.configuration.DataDir;
 import net.sibcolombia.sibsp.model.Vocabulary;
+import net.sibcolombia.sibsp.model.VocabularyConcept;
+import net.sibcolombia.sibsp.model.VocabularyTerm;
 import net.sibcolombia.sibsp.model.factory.VocabularyFactory;
 import net.sibcolombia.sibsp.service.BaseManager;
 import net.sibcolombia.sibsp.service.InvalidConfigException;
@@ -45,7 +51,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.xml.sax.SAXException;
 
-
+/**
+ * Manager for all vocabulary related methods. Keeps an internal map of locally existing and parsed vocabularies which
+ * is keyed on a normed filename derived from a vocabularies URL. We use this derived filename instead of the proper
+ * URL
+ * as we do not persist any additional data than the extension file itself - which doesnt have its own URL embedded.
+ */
+@Singleton
 public class VocabulariesManagerImplementation extends BaseManager implements VocabulariesManager {
 
   public class UpdateResult {
@@ -107,6 +119,15 @@ public class VocabulariesManagerImplementation extends BaseManager implements Vo
   }
 
   @Override
+  public Vocabulary get(String uriString) {
+    if (uriString == null) {
+      return null;
+    }
+    URI uriObject = id2uri.get(uriString.toLowerCase());
+    return vocabularies.get(uriObject);
+  }
+
+  @Override
   public Vocabulary get(URI uriObject) {
     if (!vocabularies.containsKey(uriObject)) {
       try {
@@ -121,9 +142,34 @@ public class VocabulariesManagerImplementation extends BaseManager implements Vo
   }
 
   @Override
-  public Map<String, String> getI18nVocab(String uri, String lang, boolean sortAlphabetically) {
-    // TODO Auto-generated method stub
-    return null;
+  public Map<String, String> getI18nVocab(String uriString, String lang, boolean sortAlphabetically) {
+    Map<String, String> map = new LinkedHashMap<String, String>();
+    Vocabulary v = get(uriString);
+    if (v != null) {
+      List<VocabularyConcept> concepts;
+      if (sortAlphabetically) {
+        concepts = new ArrayList<VocabularyConcept>(v.getConcepts());
+        final String s = lang;
+        Collections.sort(concepts, new Comparator<VocabularyConcept>() {
+
+          @Override
+          public int compare(VocabularyConcept o1, VocabularyConcept o2) {
+            return (o1.getPreferredTerm(s) == null ? o1.getIdentifier() : o1.getPreferredTerm(s).getTitle())
+              .compareTo((o2.getPreferredTerm(s) == null ? o2.getIdentifier() : o2.getPreferredTerm(s).getTitle()));
+          }
+        });
+      } else {
+        concepts = v.getConcepts();
+      }
+      for (VocabularyConcept c : concepts) {
+        VocabularyTerm t = c.getPreferredTerm(lang);
+        map.put(c.getIdentifier(), t == null ? c.getIdentifier() : t.getTitle());
+      }
+    }
+    if (map.isEmpty()) {
+      log.debug("Empty i18n map for vocabulary " + uriString + " and language " + lang);
+    }
+    return map;
   }
 
   private File getVocabFile(URI uriObject) {
@@ -182,6 +228,7 @@ public class VocabulariesManagerImplementation extends BaseManager implements Vo
       files.addAll(Arrays.asList(dir.listFiles(ff)));
       for (File ef : files) {
         try {
+          log.info("Loading vocabulary " + ef.getName() + " from folder");
           Vocabulary v = loadFromFile(ef);
           if (v != null && addToCache(v, id2uri.get(v.getUriString().toLowerCase()))) {
             counter++;

@@ -7,10 +7,12 @@ import java.io.IOException;
 import java.util.UUID;
 
 import com.google.inject.ImplementedBy;
+import net.sibcolombia.sibsp.action.BaseAction;
 import net.sibcolombia.sibsp.model.Resource;
 import net.sibcolombia.sibsp.service.DeletionNotAllowedException;
 import net.sibcolombia.sibsp.service.InvalidConfigException;
-import net.sibcolombia.sibsp.service.portal.implementation.ResourceManagerImpl;
+import net.sibcolombia.sibsp.service.PublicationException;
+import net.sibcolombia.sibsp.service.portal.implementation.ResourceManagerImplementation;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
 /**
@@ -18,7 +20,7 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
  * The manager keeps a map of the basic metadata and authorisation information in memory, but further details like the
  * full EML or mapping configuration is stored in files and loaded into manager sessions when needed.
  */
-@ImplementedBy(ResourceManagerImpl.class)
+@ImplementedBy(ResourceManagerImplementation.class)
 public interface ResourceManager {
 
   /**
@@ -48,6 +50,25 @@ public interface ResourceManager {
    */
   public Resource processMetadataSpreadsheetPart(File sourceFile, String fileName, ActionLogger actionLogger)
     throws InvalidFormatException, IOException, NullPointerException;
+
+  /**
+   * Publishes a new version of a resource including generating a darwin core archive and issuing a new EML version.
+   * 
+   * @param resource Resource
+   * @param action the action to use for logging messages to
+   * @return true if a new asynchronous DwC-A generation job has been issued which requires some mapped data
+   * @throws PublicationException if resource was already registered
+   */
+  boolean publish(Resource resource, BaseAction action) throws PublicationException;
+
+  /**
+   * Issues a new EML version for the given resource.
+   * 
+   * @param resource Resource
+   * @param action the action to use for logging messages
+   * @throws PublicationException if resource was already registered
+   */
+  void publishMetadata(Resource resource, BaseAction action) throws PublicationException;
 
   void save(Resource resource);
 

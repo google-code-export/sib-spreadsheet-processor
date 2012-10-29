@@ -61,5 +61,12 @@
 	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/xstream-1.4.3.jar"/>
 	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/xwork-core-2.3.4.1.jar"/>
 	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/xz-1.0.jar"/>
+	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/bcmail-jdk14-1.38.jar"/>
+	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/bcmail-jdk14-138.jar"/>
+	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/bcprov-jdk14-1.38.jar"/>
+	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/bcprov-jdk14-138.jar"/>
+	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/bctsp-jdk14-1.38.jar"/>
+	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/itext-2.1.7.jar"/>
+	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/itext-rtf-2.1.7.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

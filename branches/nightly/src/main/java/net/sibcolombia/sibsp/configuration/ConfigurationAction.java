@@ -3,10 +3,12 @@ package net.sibcolombia.sibsp.configuration;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 
 import com.google.inject.Inject;
 import net.sibcolombia.sibsp.action.BaseAction;
 import net.sibcolombia.sibsp.interfaces.ConfigurationManager;
+import net.sibcolombia.sibsp.model.Extension;
 import net.sibcolombia.sibsp.service.InvalidConfigException;
 import net.sibcolombia.sibsp.service.admin.ExtensionManager;
 import net.sibcolombia.sibsp.struts2.SimpleTextProvider;
@@ -96,6 +98,13 @@ public class ConfigurationAction extends BaseAction {
           boolean directoryCreated = configurationManager.setDataDir(dataDirectory);
           if (directoryCreated) {
             addActionMessage(getText("admin.config.setup.datadir.created"));
+            configurationManager.loadDataDirConfig();
+            List<Extension> list = extensionManager.listCore();
+
+            if (list.isEmpty()) {
+              // load all registered extensions from registry, and install core extensions
+              extensionManager.installCoreTypes();
+            }
           } else {
             addActionMessage(getText("admin.config.setup.datadir.reused"));
           }
