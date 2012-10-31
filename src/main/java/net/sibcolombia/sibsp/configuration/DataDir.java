@@ -113,6 +113,13 @@ public class DataDir {
     }
     org.gbif.ipt.utils.FileUtils.copyStreamToFile(input, configFile("about.ftl"));
 
+    input = streamUtils.classpathStream("configurationFiles/columnmapping.csv");
+    if (input == null) {
+      throw new InvalidConfigException(TYPE.CONFIG_WRITE,
+        "Cannot read required classpath resources to create new data dir!");
+    }
+    org.gbif.ipt.utils.FileUtils.copyStreamToFile(input, configFile("columnmapping.csv"));
+
     log.info("Creating new default data dir");
   }
 
@@ -131,6 +138,10 @@ public class DataDir {
     File f = new File(dataDir, path);
     assureParentExists(f);
     return f;
+  }
+
+  public File getDataDir() {
+    return dataDir;
   }
 
   /**
@@ -269,11 +280,18 @@ public class DataDir {
     }
   }
 
+  public File sourceExcelFile(Resource resource, String fileName) {
+    if (resource == null) {
+      return null;
+    }
+    return resourceFile(resource.getUniqueID().toString(), "sources/" + fileName + ".txt");
+  }
+
   public File sourceFile(Resource resource, Source source) {
     if (resource == null) {
       return null;
     }
-    return resourceFile(resource.getUniqueID().toString(), "sources/" + source.getName() + ".xls");
+    return resourceFile(resource.getUniqueID().toString(), "sources/" + source.getName() + ".txt");
   }
 
   public File sourceLogFile(String resourceName, String sourceName) {

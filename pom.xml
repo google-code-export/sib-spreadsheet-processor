@@ -47,6 +47,7 @@
         <jsr305.version>1.3.9</jsr305.version>
         <xstream.version>1.4.3</xstream.version>
         <itext.version>2.1.7</itext.version>
+        <opencsv.version>2.3</opencsv.version>
     </properties>
     
 	<developers>
@@ -358,6 +359,13 @@
 			<groupId>com.lowagie</groupId>
 			<artifactId>itext-rtf</artifactId>
 			<version>${itext.version}</version>
+		</dependency>
+		
+		<!-- CSV Writer to convert from Excel template to text tab file -->
+		<dependency>
+			<groupId>net.sf.opencsv</groupId>
+			<artifactId>opencsv</artifactId>
+			<version>${opencsv.version}</version>
 		</dependency>
         
     </dependencies>
