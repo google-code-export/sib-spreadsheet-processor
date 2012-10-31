@@ -2,11 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="src/main/java"/>
 	<classpathentry kind="src" path="src/test/java"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jre7">
-		<attributes>
-			<attribute name="owner.project.facets" value="java"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
 	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/aopalliance-1.0.jar"/>
@@ -68,5 +63,7 @@
 	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/bctsp-jdk14-1.38.jar"/>
 	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/itext-2.1.7.jar"/>
 	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/itext-rtf-2.1.7.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jre7"/>
+	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/opencsv-2.3.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
