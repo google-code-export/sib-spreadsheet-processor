@@ -1,5 +1,7 @@
 package net.sibcolombia.sibsp.configuration;
 
+import org.gbif.ipt.task.GenerateDwca;
+import org.gbif.ipt.task.GenerateDwcaFactory;
 import org.gbif.ipt.utils.InputStreamUtils;
 import org.gbif.utils.HttpUtil;
 import org.gbif.utils.PreemptiveAuthenticationInterceptor;
@@ -15,6 +17,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import com.google.inject.assistedinject.FactoryProvider;
 import net.sibcolombia.sibsp.model.factory.ExtensionFactory;
 import net.sibcolombia.sibsp.model.factory.VocabularyFactory;
 import net.sibcolombia.sibsp.struts2.SimpleTextProvider;
@@ -39,6 +42,10 @@ public class SPModule extends AbstractModule {
     bind(SimpleTextProvider.class).in(Scopes.SINGLETON);
     bind(ExtensionFactory.class).in(Scopes.SINGLETON);
     bind(VocabularyFactory.class).in(Scopes.SINGLETON);
+
+    // assisted inject factories
+    bind(GenerateDwcaFactory.class).toProvider(
+      FactoryProvider.newFactory(GenerateDwcaFactory.class, GenerateDwca.class));
   }
 
   @Provides

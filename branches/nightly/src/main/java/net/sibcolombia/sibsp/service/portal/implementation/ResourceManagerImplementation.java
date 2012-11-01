@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -92,20 +93,22 @@ public class ResourceManagerImplementation extends BaseManager implements Resour
 
   private final Eml2Rtf eml2Rtf;
 
-  private GenerateDwcaFactory dwcaFactory;
-  private ThreadPoolExecutor executor;
+  private final GenerateDwcaFactory dwcaFactory;
+  private final ThreadPoolExecutor executor;
   private final Map<String, Future<Integer>> processFutures = new HashMap<String, Future<Integer>>();
 
   @Inject
   public ResourceManagerImplementation(ApplicationConfig config, DataDir dataDir,
     SimpleTextProvider simpleTextProvider, RegistryManager registryManager, ExtensionManager extensionManager,
-    VocabulariesManager vocabularyManager, Eml2Rtf eml2Rtf) {
+    VocabulariesManager vocabularyManager, Eml2Rtf eml2Rtf, GenerateDwcaFactory dwcaFactory) {
     super(config, dataDir);
     this.extensionManager = extensionManager;
     this.registryManager = registryManager;
     this.vocabularyManager = vocabularyManager;
     this.textProvider = simpleTextProvider;
     this.eml2Rtf = eml2Rtf;
+    this.dwcaFactory = dwcaFactory;
+    this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(3);
     baseAction = new BaseAction(simpleTextProvider, config);
   }
 
@@ -148,7 +151,7 @@ public class ResourceManagerImplementation extends BaseManager implements Resour
   }
 
   private void generateDwca(Resource resource) {
-    // use threads to run in the background as sql sources might take a long time
+    // use threads to run in the background
     GenerateDwca worker = dwcaFactory.create(resource, this);
     Future<Integer> f = executor.submit(worker);
     processFutures.put(resource.getUniqueID().toString(), f);
