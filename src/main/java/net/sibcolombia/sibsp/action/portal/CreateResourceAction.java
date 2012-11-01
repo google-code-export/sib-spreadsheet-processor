@@ -1,7 +1,10 @@
 package net.sibcolombia.sibsp.action.portal;
 
+import org.gbif.dwc.terms.ConceptTerm;
 import org.gbif.ipt.task.Xls2Csv;
 import org.gbif.ipt.utils.ActionLogger;
+import org.gbif.ipt.validation.ExtensionMappingValidator;
+import org.gbif.ipt.validation.ExtensionMappingValidator.ValidationStatus;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,9 +13,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -26,12 +32,15 @@ import net.sibcolombia.sibsp.model.ExtensionMapping;
 import net.sibcolombia.sibsp.model.ExtensionProperty;
 import net.sibcolombia.sibsp.model.PropertyMapping;
 import net.sibcolombia.sibsp.model.RecordFilter;
+import net.sibcolombia.sibsp.model.Resource.CoreRowType;
 import net.sibcolombia.sibsp.model.Source;
 import net.sibcolombia.sibsp.model.Source.FileSource;
+import net.sibcolombia.sibsp.service.AlreadyExistingException;
 import net.sibcolombia.sibsp.service.ImportException;
 import net.sibcolombia.sibsp.service.InvalidFileExtension;
 import net.sibcolombia.sibsp.service.InvalidFileName;
 import net.sibcolombia.sibsp.service.admin.ExtensionManager;
+import net.sibcolombia.sibsp.service.admin.VocabulariesManager;
 import net.sibcolombia.sibsp.service.portal.ResourceManager;
 import net.sibcolombia.sibsp.service.portal.SourceManager;
 import net.sibcolombia.sibsp.struts2.SimpleTextProvider;
@@ -71,19 +80,40 @@ public class CreateResourceAction extends ManagerBaseAction {
   private List<String[]> peek;
 
   private final Map<String, Map<String, String>> vocabTerms = new HashMap<String, Map<String, String>>();
+  private final VocabulariesManager vocabulariesManager;
 
 
   @Inject
   public CreateResourceAction(SimpleTextProvider textProvider, ApplicationConfig config,
     ResourceManager resourceManager, DataDir dataDir, ExtensionManager extensionManager, SourceManager sourceManager,
-    Xls2Csv excelToCsvConverter) {
+    Xls2Csv excelToCsvConverter, VocabulariesManager vocabulariesManager) {
     super(textProvider, config, resourceManager);
     this.extensionManager = extensionManager;
     this.dataDir = dataDir;
     this.sourceManager = sourceManager;
     this.excelToCsvConverter = excelToCsvConverter;
+    this.vocabulariesManager = vocabulariesManager;
   }
 
+
+  public void addWarnings() {
+    if (mapping.getSource() == null) {
+      return;
+    }
+    ExtensionMappingValidator validator = new ExtensionMappingValidator();
+    ValidationStatus v = validator.validate(mapping, resource, peek);
+    if (v != null && !v.isValid()) {
+      if (v.getIdProblem() != null) {
+        addActionWarning(getText(v.getIdProblem(), v.getIdProblemParams()));
+      }
+      for (ConceptTerm t : v.getMissingRequiredFields()) {
+        addActionWarning(getText("validation.required", new String[] {t.simpleName()}));
+      }
+      for (ConceptTerm t : v.getWrongDataTypeFields()) {
+        addActionWarning(getText("validation.wrong.datatype", new String[] {t.simpleName()}));
+      }
+    }
+  }
 
   /**
    * This method automaps a source's columns. First it tries to automap the mappingCoreId column, and then it tries
@@ -98,7 +128,11 @@ public class CreateResourceAction extends ManagerBaseAction {
     // start by trying to automap the mappingCoreId (occurrenceId/taxonId) to a column in source
     int idx1 = 0;
     for (String col : columns) {
+      log.info("Without normalize column: " + col);
       col = normalizeColumnName(col);
+      log.info("Normalize column: " + col);
+      log.info(mappingCoreid.getTerm().simpleNormalisedName());
+      log.info("Comparación: " + mappingCoreid.getTerm().simpleNormalisedName().equalsIgnoreCase(col));
       if (col != null && mappingCoreid.getTerm().simpleNormalisedName().equalsIgnoreCase(col)) {
         // mappingCoreId and mapping id column must both be set (and have the same index) to automap successfully.
         mappingCoreid.setIndex(idx1);
@@ -115,6 +149,7 @@ public class CreateResourceAction extends ManagerBaseAction {
       int idx2 = 0;
       for (String col : columns) {
         col = normalizeColumnName(col);
+        // log.info("Property: " + f.getTerm().simpleNormalisedName());
         if (col != null && f.getTerm().simpleNormalisedName().equalsIgnoreCase(col)) {
           f.setIndex(idx2);
           // we have automapped the term, so increment automapped counter and exit
@@ -137,10 +172,10 @@ public class CreateResourceAction extends ManagerBaseAction {
     }
   }
 
+
   public String getShortname() {
     return shortname;
   }
-
 
   private boolean isBasicOcurrenceOnly() {
     if (onlyFileName.equalsIgnoreCase("DwC_min_elements_template_version_1.0")) {
@@ -185,7 +220,10 @@ public class CreateResourceAction extends ManagerBaseAction {
       // If user wants to import a source without a header lines, the columns are going to be numbered with the first
       // non-null value as an example. Otherwise, read the file/database normally.
       if (mapping.getSource().isFileSource() && ((FileSource) mapping.getSource()).getIgnoreHeaderLines() == 0) {
-        columns = mapping.getColumns(peek);
+        columns = mapping.getCompleteElementWithoutColumn(peek);
+        log.info("Columna 1: " + columns.get(0));
+        log.info("Columna 2: " + columns.get(1));
+        log.info("Columna 3: " + columns.get(2));
       } else {
         columns = sourceManager.columns(mapping.getSource());
       }
@@ -209,9 +247,13 @@ public class CreateResourceAction extends ManagerBaseAction {
           tmpFile.delete();
         } else if (isBasicOcurrenceOnly()) {
           UUID uniqueID = UUID.randomUUID();
+          this.resource.setCoreType(Constants.DWC_ROWTYPE_OCCURRENCE);
           this.resource = resourceManager.processMetadataSpreadsheetPart(tmpFile, fileFileName, actionLogger);
           this.resource.setUniqueID(uniqueID);
           dataFileElements = excelToCsvConverter.convertExcelToCsv(resource, tmpFile, actionLogger);
+          Source source = sourceManager.add(this.resource, dataFileElements, fileFileName);
+          this.resource.addSource(source, true);
+          saveResource();
 
           Extension extension = extensionManager.get(Constants.DWC_ROWTYPE_OCCURRENCE);
           if (extension != null) {
@@ -220,8 +262,6 @@ public class CreateResourceAction extends ManagerBaseAction {
           }
           if (mapping != null || mapping.getExtension() != null) {
             if (mapping.getSource() == null) {
-              Source source = sourceManager.add(this.resource, dataFileElements, fileFileName);
-              saveResource();
               mapping.setSource(source);
             }
             // set empty filter if not existing
@@ -258,12 +298,10 @@ public class CreateResourceAction extends ManagerBaseAction {
                 continue;
               }
               // uses a vocabulary?
-              /*
-               * if (p.getVocabulary() != null) {
-               * vocabTerms.put(p.getVocabulary().getUriString(),
-               * vocabManager.getI18nVocab(p.getVocabulary().getUriString(), getLocaleLanguage(), true));
-               * }
-               */
+              if (p.getVocabulary() != null) {
+                vocabTerms.put(p.getVocabulary().getUriString(),
+                  vocabulariesManager.getI18nVocab(p.getVocabulary().getUriString(), getLocaleLanguage(), true));
+              }
               // mapped already?
               PropertyMapping f = mapping.getField(p.getQualname());
               if (f == null) {
@@ -274,17 +312,17 @@ public class CreateResourceAction extends ManagerBaseAction {
               fields.add(f);
             }
 
+            log.info("Fields found: " + mapping.getFields().isEmpty());
             // finally do automapping if no fields are found
             if (mapping.getFields().isEmpty()) {
               int automapped = automap();
-              if (automapped > 0) {
-                addActionMessage(getText("manage.mapping.automaped", new String[] {String.valueOf(automapped)}));
-              }
+              log.info("Total automaped: " + automapped);
             }
-            this.resource.addMapping(mapping);
 
+            saveMapping();
 
-            saveResource();
+            log.info("Los datos esta mapeados: " + resource.hasMappedData());
+            log.info("Los datos esta mapeados: " + resource.hasMappedData());
           }
 
 
@@ -322,8 +360,41 @@ public class CreateResourceAction extends ManagerBaseAction {
       log.error("File import error.");
       addFieldError("file", getText("sibsp.application.error.importexception"));
       return INPUT;
+    } catch (AlreadyExistingException e) {
+      log.error("File already exist.");
+      return INPUT;
     }
     return SUCCESS;
+  }
+
+  public String saveMapping() throws IOException {
+    // save field mappings
+    Set<PropertyMapping> mappedFields = new HashSet<PropertyMapping>();
+    for (PropertyMapping f : fields) {
+      if (f.getIndex() != null || StringUtils.trimToNull(f.getDefaultValue()) != null) {
+        mappedFields.add(f);
+      }
+    }
+    // save coreid field
+    mappingCoreid.setIndex(mapping.getIdColumn());
+    mappingCoreid.setDefaultValue(mapping.getIdSuffix());
+    if (mappingCoreid.getIndex() != null || StringUtils.trimToNull(mappingCoreid.getDefaultValue()) != null) {
+      mappedFields.add(mappingCoreid);
+    }
+    // back to mapping object
+    mapping.setFields(mappedFields);
+
+    // update core type
+    updateResourceCoreType(mapping, mappedFields.size());
+
+    // set modified date
+    resource.setModified(new Date());
+    // save entire resource config
+    saveResource();
+    // report validation without skipping this save
+    addWarnings();
+
+    return defaultResult;
   }
 
   public void setFile(File file) {
@@ -340,6 +411,30 @@ public class CreateResourceAction extends ManagerBaseAction {
 
   public void setShortname(String shortname) {
     this.shortname = shortname;
+  }
+
+  /**
+   * Update resource core type. This must be done every time the resource's core type mapping is being modified, or
+   * deleted. If it is the 1st mapping of the core type, the core type won't have been set yet. Only if 1 or more
+   * mapped fields were saved, can we consider the mapping to have been legitimate. Furthermore, if the
+   * core type mapping is being deleted, then the resource must reset its core type to null.
+   * 
+   * @param mapping ExtensionMapping
+   * @param mappedFields the number of mapped fields in the mapping - set to 0 if the mapping is to be deleted
+   */
+  void updateResourceCoreType(ExtensionMapping mapping, int mappedFields) {
+    // proceed only if we're dealing with the core type mapping
+    if (mapping.isCore()) {
+      // must be 1 or more mapped fields for mapping to be legitimate
+      if (mappedFields > 0) {
+        resource.setCoreType(resource.getCoreRowType().equalsIgnoreCase(Constants.DWC_ROWTYPE_TAXON) ? StringUtils
+          .capitalize(CoreRowType.CHECKLIST.toString()) : StringUtils.capitalize(CoreRowType.OCCURRENCE.toString()));
+      }
+      // otherwise, reset core type!
+      else {
+        resource.setCoreType(null);
+      }
+    }
   }
 
   private File uploadToTmp() throws InvalidFileExtension, InvalidFileName {

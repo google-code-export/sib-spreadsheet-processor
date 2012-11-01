@@ -2,6 +2,7 @@ package net.sibcolombia.sibsp.action;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -73,6 +74,18 @@ public class BaseAction extends ActionSupport implements SessionAware, Preparabl
    */
   public List<String> getActionWarnings() {
     return warnings;
+  }
+
+  /**
+   * Custom simple text provider for much faster lookups.
+   * This increases page rendering with lots of <@s:text> tags by nearly 100%.
+   * Struts2 manages the locale in the session param WW_TRANS_I18N_LOCALE via the i18n interceptor.
+   * If the Locale is null, the default language "en" is returned.
+   * 
+   * @return Locale language, or default language string "en" if Locale was null
+   */
+  public String getLocaleLanguage() {
+    return (getLocale() == null) ? Locale.ENGLISH.getLanguage() : getLocale().getLanguage();
   }
 
   public String getRootURL() {

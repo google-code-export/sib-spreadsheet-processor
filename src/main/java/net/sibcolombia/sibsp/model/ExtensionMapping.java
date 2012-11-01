@@ -64,6 +64,35 @@ public class ExtensionMapping implements Serializable {
     return new ArrayList<String>();
   }
 
+  /**
+   * @param peek Peek of File source.
+   * @return list of columns names depending on its mapping.
+   */
+  public List<String> getCompleteElementWithoutColumn(List<String[]> peek) {
+    if (!peek.isEmpty()) {
+      int columnsCount = peek.get(0).length;
+      List<String> columns = new ArrayList<String>(columnsCount);
+      for (int count = 0; count < columnsCount; count++) {
+        String value = null;
+        for (String[] row : peek) {
+          if (row[count] != null && !(row[count].length() == 0)) {
+            // add column number and first value as example
+            // e.g. Column #2 - Puma conco...
+            value = row[count];
+            break;
+          }
+        }
+        if (value == null) {
+          columns.add("Column #" + (count + 1));
+        } else {
+          columns.add(value);
+        }
+      }
+      return columns;
+    }
+    return new ArrayList<String>();
+  }
+
   public Extension getExtension() {
     return extension;
   }

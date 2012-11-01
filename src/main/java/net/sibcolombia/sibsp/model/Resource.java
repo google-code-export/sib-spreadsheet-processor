@@ -37,6 +37,7 @@ public class Resource {
   private final Set<Source> sources = new HashSet<Source>();
   // registry data - only exists when status=REGISTERED
   private UUID key;
+  private Date modified;
 
   private final List<ExtensionMapping> mappings = new ArrayList<ExtensionMapping>();
   private Date created;
@@ -58,6 +59,7 @@ public class Resource {
         throw new IllegalArgumentException("Cannot add extension mapping before a core mapping exists");
       }
       Integer index = getMappings(mapping.getExtension().getRowType()).size();
+      log.info("Mapping index: " + index);
       this.mappings.add(mapping);
       return index;
     }
@@ -219,6 +221,10 @@ public class Resource {
     return maps;
   }
 
+  public Date getModified() {
+    return this.modified;
+  }
+
   public int getRecordsPublished() {
     return this.recordsPublished;
   }
@@ -276,6 +282,10 @@ public class Resource {
 
   public void setLastPublished(Date lastPublished) {
     this.lastPublished = lastPublished;
+  }
+
+  public void setModified(Date modified) {
+    this.modified = modified;
   }
 
   public void setRecordsPublished(int recordsPublished) {
