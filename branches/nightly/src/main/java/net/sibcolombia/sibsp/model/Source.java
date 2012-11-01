@@ -40,7 +40,7 @@ public abstract class Source implements Comparable<Source>, Serializable {
 
     private String fieldsTerminatedBy = "\t";
     private String fieldsEnclosedBy;
-    private int ignoreHeaderLines = 0;
+    private int ignoreHeaderLines = 1;
     private File file;
     private long fileSize;
     private int rows;
