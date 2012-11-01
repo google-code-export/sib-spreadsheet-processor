@@ -128,11 +128,7 @@ public class CreateResourceAction extends ManagerBaseAction {
     // start by trying to automap the mappingCoreId (occurrenceId/taxonId) to a column in source
     int idx1 = 0;
     for (String col : columns) {
-      log.info("Without normalize column: " + col);
       col = normalizeColumnName(col);
-      log.info("Normalize column: " + col);
-      log.info(mappingCoreid.getTerm().simpleNormalisedName());
-      log.info("Comparación: " + mappingCoreid.getTerm().simpleNormalisedName().equalsIgnoreCase(col));
       if (col != null && mappingCoreid.getTerm().simpleNormalisedName().equalsIgnoreCase(col)) {
         // mappingCoreId and mapping id column must both be set (and have the same index) to automap successfully.
         mappingCoreid.setIndex(idx1);
@@ -247,7 +243,6 @@ public class CreateResourceAction extends ManagerBaseAction {
           tmpFile.delete();
         } else if (isBasicOcurrenceOnly()) {
           UUID uniqueID = UUID.randomUUID();
-          this.resource.setCoreType(Constants.DWC_ROWTYPE_OCCURRENCE);
           this.resource = resourceManager.processMetadataSpreadsheetPart(tmpFile, fileFileName, actionLogger);
           this.resource.setUniqueID(uniqueID);
           dataFileElements = excelToCsvConverter.convertExcelToCsv(resource, tmpFile, actionLogger);
@@ -312,21 +307,25 @@ public class CreateResourceAction extends ManagerBaseAction {
               fields.add(f);
             }
 
-            log.info("Fields found: " + mapping.getFields().isEmpty());
             // finally do automapping if no fields are found
             if (mapping.getFields().isEmpty()) {
-              int automapped = automap();
-              log.info("Total automaped: " + automapped);
+              automap();
             }
+
+            this.resource.addMapping(mapping);
 
             saveMapping();
 
-            log.info("Los datos esta mapeados: " + resource.hasMappedData());
-            log.info("Los datos esta mapeados: " + resource.hasMappedData());
+            // remove all DwC mappings with 0 terms mapped
+            for (ExtensionMapping em : resource.getCoreMappings()) {
+              if (em.getFields().isEmpty()) {
+                resource.deleteMapping(em);
+              }
+            }
           }
 
 
-          if (resourceManager.publish(resource, this)) {
+          if (resourceManager.publish(this.resource, this)) {
             addActionMessage(getText("sibsp.application.portal.overview.publishing.resource.version",
               new String[] {Integer.toString(resource.getEmlVersion())}));
           }
