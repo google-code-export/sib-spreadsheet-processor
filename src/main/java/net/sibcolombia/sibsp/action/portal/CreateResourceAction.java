@@ -324,7 +324,6 @@ public class CreateResourceAction extends ManagerBaseAction {
             }
           }
 
-
           if (resourceManager.publish(this.resource, this)) {
             addActionMessage(getText("sibsp.application.portal.overview.publishing.resource.version",
               new String[] {Integer.toString(resource.getEmlVersion())}));
