@@ -1,0 +1,57 @@
+<eml:eml xmlns:eml="eml://ecoinformatics.org/eml-2.1.1"
+         xmlns:dc="http://purl.org/dc/terms/"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="eml://ecoinformatics.org/eml-2.1.1 http://rs.gbif.org/schema/eml-gbif-profile/1.0.2/eml.xsd"
+         packageId="http://localhost:8080/ipteclipse/resource.do?id=prueba/v0" system="http://gbif.org" scope="system"
+         xml:lang="eng">
+
+<dataset>
+  <title xml:lang="eng">Un metadato de prueba</title>
+<creator>
+    <individualName>
+        <givenName>Laura Valentina</givenName>
+      <surName>Grajales Olarte</surName>
+    </individualName>
+    <organizationName>Personal</organizationName>
+    <positionName>Developer</positionName>
+</creator>
+<metadataProvider>
+    <individualName>
+      <surName>Grajales Olarte</surName>
+    </individualName>
+    <organizationName>Personal</organizationName>
+    <positionName>Developer</positionName>
+</metadataProvider>
+    <associatedParty>
+    <individualName>
+        <givenName>Laura Valentina</givenName>
+      <surName>Grajales Olarte</surName>
+    </individualName>
+    <electronicMailAddress>valegrajales@gmail.com</electronicMailAddress>
+    <role>user</role>
+    </associatedParty>
+<pubDate>
+      	2012-09-17
+</pubDate>
+<language>eng</language>
+<abstract>
+  <para>Descripción experimental</para>
+</abstract>
+  <contact>
+    <individualName>
+        <givenName>Laura Valentina</givenName>
+      <surName>Grajales Olarte</surName>
+    </individualName>
+    <organizationName>Personal</organizationName>
+    <positionName>Developer</positionName>
+  </contact>
+</dataset>
+  <additionalMetadata>
+    <metadata>
+      <gbif>
+          <dateStamp>2012-09-17T09:53:27.264-05:00</dateStamp>
+          <hierarchyLevel>dataset</hierarchyLevel>
+      </gbif>
+    </metadata>
+  </additionalMetadata>
+</eml:eml>

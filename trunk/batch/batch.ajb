@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Batch zipUpResults="true">
+    <CreateBy createByType="package" inwards="false" outwards="false">
+        <SeedTypeSelectorAndSwitchValues elementSelector="topLevelSourceTypes" switchValues=""/>
+        <PopulationTypeSelectorAndSwitchValues elementSelector="nonJavaStarPackageTypes" switchValues=""/>
+    </CreateBy>
+    <CreateBy createByType="inheritance" inwards="true" outwards="true">
+        <SeedTypeSelectorAndSwitchValues elementSelector="topLevelSourceTypes" switchValues=""/>
+        <PopulationTypeSelectorAndSwitchValues elementSelector="nonJavaStarPackageTypes" switchValues=""/>
+    </CreateBy>
+    <CreateBy createByType="composition" inwards="false" outwards="false">
+        <SeedTypeSelectorAndSwitchValues elementSelector="topLevelSourceTypes" switchValues=""/>
+        <PopulationTypeSelectorAndSwitchValues elementSelector="nonJavaStarPackageTypes" switchValues=""/>
+    </CreateBy>
+    <CreateBy createByType="dependency" inwards="true" outwards="true">
+        <SeedTypeSelectorAndSwitchValues elementSelector="topLevelSourceTypes" switchValues=""/>
+        <PopulationTypeSelectorAndSwitchValues elementSelector="nonJavaStarPackageTypes" switchValues=""/>
+    </CreateBy>
+</Batch>
