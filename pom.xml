@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>net.sibcolombia.spreadsheet-processor</groupId>
+    <artifactId>sib-spreadsheet-processor</artifactId>
+
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <name>sib-spreadsheet-processor</name>
+    <url>http://www.sibcolombia.net/tools/sib-spreadsheet-processor</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        
+        <!-- maven treats properties as strings only, so we cannot negate a boolean devMode value. Therefore we keep both available - make sure they are always negated in all profiles! -->
+		<devMode>true</devMode>
+		<devModeNegated>false</devModeNegated>
+		
+		<sibsp.rootURL/>
+		
+		<jdkLevel>1.7</jdkLevel>
+        
+        <junit.version>4.10</junit.version>
+        <gbif-metadata-profile.version>1.1-SNAPSHOT</gbif-metadata-profile.version>
+        <gbif-common-api.version>0.2</gbif-common-api.version>
+        <gbif-common.version>0.8-SNAPSHOT</gbif-common.version>
+        <dwca-reader.version>1.12-SNAPSHOT</dwca-reader.version>
+        <dwc-api.version>1.1-SNAPSHOT</dwc-api.version>
+        <struts2.version>2.3.4.1</struts2.version>
+        <log4j.version>1.2.17</log4j.version>
+        <poi.version>3.8</poi.version>
+        <poi-ooxml.version>3.8</poi-ooxml.version>
+        <poi-scratchpad.version>3.8</poi-scratchpad.version>
+        <poi-ooxml-schemas.version>1.1</poi-ooxml-schemas.version>
+        <guice.version>3.0</guice.version>
+        <servlet-api.version>2.5</servlet-api.version>
+        <jsp-api.version>2.0</jsp-api.version>
+        <httputils.version>0.2</httputils.version>
+        <freemarker.version>2.3.19</freemarker.version>
+        <guava.version>13.0.1</guava.version>
+        <gson.version>2.2.2</gson.version>
+        <jsr305.version>1.3.9</jsr305.version>
+        <xstream.version>1.4.3</xstream.version>
+        <itext.version>2.1.7</itext.version>
+        <opencsv.version>2.3</opencsv.version>
+    </properties>
+    
+	<developers>
+		<developer>
+			<name>Valentina Grajales</name>
+			<email>valegrajales@gmail.com</email>
+		</developer>
+    </developers>
+    
+    <scm>
+    	<connection>scm:svn:http://sib-spreadsheet-processor.googlecode.com/svn/branches/nightly</connection>
+    	<developerConnection>scm:svn:https://sib-spreadsheet-processor.googlecode.com/svn/branches/nightly</developerConnection>
+    	<url>http://sib-spreadsheet-processor.googlecode.com/source/browse#svn/branches/nightly</url>
+    </scm>
+    
+    <repositories>
+        <repository>
+            <id>gbif-all</id>
+            <url>http://repository.gbif.org/content/groups/gbif</url>    
+		</repository>
+		<repository>
+			<id>gbif-thirdparty</id>
+			<url>http://repository.gbif.org/content/repositories/thirdparty</url>
+		</repository>
+	</repositories>
+
+    <build>
+        <finalName>sib-spreadsheet-processor</finalName>
+        
+        <plugins>
+            <plugin>
+            	<groupId>org.apache.maven.plugins</groupId>
+            	<artifactId>maven-eclipse-plugin</artifactId>
+            	<configuration>
+                	<downloadSources>true</downloadSources>
+                	<additionalBuildcommands>
+                    	<buildcommand>com.atlassw.tools.eclipse.checkstyle.CheckstyleBuilder</buildcommand>
+                	</additionalBuildcommands>
+                	<additionalConfig>
+                    	<file>
+                        	<name>.checkstyle</name>
+                        	<url>http://rs.gbif.org/conventions/java-style-config.xml</url>
+                    	</file>
+                	</additionalConfig>
+            	</configuration>
+        	</plugin>
+        	
+        	<!--
+        	small plugin that allows to access the projects SVN revision number.
+        	Useful to keep the pom ipt version at 1.x-SNAPSHOT while still having a unique build number
+        	See: http://mojo.codehaus.org/buildnumber-maven-plugin/usage.html
+        	-->
+        	<plugin>
+        		<groupId>org.codehaus.mojo</groupId>
+        		<artifactId>buildnumber-maven-plugin</artifactId>
+        		<version>1.1</version>
+        		<executions>
+        			<execution>
+        				<phase>validate</phase>
+        				<goals>
+        					<goal>create</goal>
+        				</goals>
+        			</execution>
+        		</executions>
+        		<configuration>
+        			<doCheck>${devModeNegated}</doCheck>
+        			<doUpdate>${devModeNegated}</doUpdate>
+        		</configuration>
+        	</plugin>
+
+        	<plugin>
+            	<groupId>org.apache.maven.plugins</groupId>
+            	<artifactId>maven-war-plugin</artifactId>
+        	</plugin>
+        	
+        	<plugin>
+        		<groupId>org.apache.maven.plugins</groupId>
+        		<artifactId>maven-compiler-plugin</artifactId>
+        		<configuration>
+        			<source>1.7</source>
+        			<target>1.7</target>
+        			<encoding>Cp1252</encoding>
+        			<showDeprecation>true</showDeprecation>
+        			<showWarnings>true</showWarnings>
+        			<fork>true</fork>
+        		</configuration>
+        	</plugin>
+        	
+        </plugins>
+        
+		<resources>
+			<!-- The default resources will all be filtered, i.e. maven variables ${xyz} will be replaced by maven -->
+			<resource>
+				<directory>src/main/resources</directory>
+				<!-- exclude the following files, as they use the same ${} syntax for non maven variables -->
+				<excludes>
+					<exclude>ApplicationResources*.properties</exclude>
+					<exclude>struts*.xml</exclude>
+				</excludes>
+				<filtering>true</filtering>
+			</resource>
+			<resource>
+				<!-- finally include the excluded files again without filtering -->
+				<directory>src/main/resources</directory>
+				<includes>
+					<include>ApplicationResources*.properties</include>
+					<include>struts*.xml</include>
+				</includes>
+				<filtering>false</filtering>
+			</resource>
+		</resources>
+        
+    </build>
+
+    <dependencies>
+    
+    	<!-- GBIF libraries -->
+    	<dependency>
+    		<groupId>org.gbif</groupId>
+    		<artifactId>dwca-reader</artifactId>
+    		<version>${dwca-reader.version}</version>
+    	</dependency>
+    	<dependency>
+    		<groupId>org.gbif</groupId>
+    		<artifactId>gbif-metadata-profile</artifactId>
+    		<version>${gbif-metadata-profile.version}</version>
+    	</dependency>
+    	<dependency>
+    		<groupId>org.gbif</groupId>
+    		<artifactId>dwc-api</artifactId>
+    		<version>${dwc-api.version}</version>
+    	</dependency>
+    	<dependency>
+    		<groupId>org.gbif</groupId>
+    		<artifactId>gbif-common</artifactId>
+    		<version>${gbif-common.version}</version>
+    	</dependency>
+    	<dependency>
+    		<groupId>org.gbif</groupId>
+    		<artifactId>gbif-httputils</artifactId>
+    		<version>${httputils.version}</version>
+    	</dependency>
+    	<dependency>
+    		<groupId>org.gbif</groupId>
+    		<artifactId>gbif-common-api</artifactId>
+    		<version>${gbif-common-api.version}</version>
+    	</dependency>
+        
+		<!-- Struts2 -->
+		<dependency>
+			<groupId>org.apache.struts</groupId>
+			<artifactId>struts2-core</artifactId>
+			<version>${struts2.version}</version>
+			<exclusions>
+				<!-- not needed - we use guice -->
+				<exclusion>
+					<groupId>org.springframework</groupId>
+					<artifactId>spring-test</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		
+		<!-- Google base libraries, e.g. collections
+		Used for equals & hash method a lot and in EML by Aaron
+		-->
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>${guava.version}</version>
+		</dependency>
+		
+		<!-- JSON representation -->
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>${gson.version}</version>
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.apache.struts.xwork</groupId>
+			<artifactId>xwork-core</artifactId>
+			<version>${struts2.version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.freemarker</groupId>
+			<artifactId>freemarker</artifactId>
+			<version>${freemarker.version}</version>
+		</dependency>
+		
+		<!-- POI Libraries for Excel files processing -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi</artifactId>
+			<version>${poi.version}</version>
+		</dependency>
+		<!-- POI Libraries for Excel XLSX files processing -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>${poi-ooxml.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-scratchpad</artifactId>
+			<version>${poi-scratchpad.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>ooxml-schemas</artifactId>
+			<version>${poi-ooxml-schemas.version}</version>
+		</dependency>
+
+        <!-- testing -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>${log4j.version}</version>
+		</dependency>
+		
+		<!-- Guice provides the code based (not XML based) injection dependency framework -->
+		<dependency>
+			<groupId>com.google.inject</groupId>
+			<artifactId>guice</artifactId>
+			<version>${guice.version}</version>
+			<exclusions>
+				<!-- superceded by guava and causing exceptions under tomcat6 -->
+				<!-- java.lang.NoSuchMethodError com.google.common.collect.ImmutableList.copyOf(Ljava/util/Collection;) -->
+				<exclusion>
+					<groupId>com.google.code.google-collections</groupId>
+					<artifactId>google-collect</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+    
+		<!-- connector to use guice natively with struts2 -->
+		<dependency>
+			<groupId>com.google.inject.extensions</groupId>
+			<artifactId>guice-struts2</artifactId>
+			<version>${guice.version}</version>
+			<scope>compile</scope>
+			<exclusions>
+				<!-- clashes with newer version included in struts2.1.6  -->
+				<exclusion>
+					<groupId>opensymphony</groupId>
+					<artifactId>xwork</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>ognl</groupId>
+					<artifactId>ognl</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		
+		<!-- Guice integration with servlets -->
+		<dependency>
+			<groupId>com.google.inject.extensions</groupId>
+			<artifactId>guice-servlet</artifactId>
+			<version>${guice.version}</version>
+		</dependency>
+		
+		<!-- An easier way to help the Guice Injector build objects -->
+		<dependency>
+			<groupId>com.google.inject.extensions</groupId>
+			<artifactId>guice-assistedinject</artifactId>
+			<version>${guice.version}</version>
+		</dependency>
+		
+		<!-- Used for the SimpleTextProvider in Struts2 -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>jsp-api</artifactId>
+			<version>${jsp-api.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<version>${servlet-api.version}</version>
+		</dependency>
+		
+		<!-- Annotations -->
+		<dependency>
+			<groupId>com.google.code.findbugs</groupId>
+			<artifactId>jsr305</artifactId>
+			<version>${jsr305.version}</version>
+		</dependency>
+		
+		<!-- XStream for resource config data persistency (could be replaced by JAXB in the future) -->
+		<dependency>
+			<groupId>com.thoughtworks.xstream</groupId>
+			<artifactId>xstream</artifactId>
+			<version>${xstream.version}</version>
+		</dependency>
+		
+		<!-- rtf generation -->
+		<dependency>
+			<groupId>com.lowagie</groupId>
+			<artifactId>itext</artifactId>
+			<version>${itext.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.lowagie</groupId>
+			<artifactId>itext-rtf</artifactId>
+			<version>${itext.version}</version>
+		</dependency>
+		
+		<!-- CSV Writer to convert from Excel template to text tab file -->
+		<dependency>
+			<groupId>net.sf.opencsv</groupId>
+			<artifactId>opencsv</artifactId>
+			<version>${opencsv.version}</version>
+		</dependency>
+        
+    </dependencies>
+
+</project>
