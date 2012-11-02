@@ -1,5 +1,6 @@
 package net.sibcolombia.sibsp.action.administration;
 
+import java.net.URL;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -42,6 +43,7 @@ public class ExtensionsAction extends POSTAction {
   private int numVocabularies = 0;
   private Date vocabulariesLastUpdated;
   private String dateFormat;
+  private String url;
 
   @Inject
   public ExtensionsAction(SimpleTextProvider textProvider, ApplicationConfig config, ExtensionManager extensionManager,
@@ -64,6 +66,10 @@ public class ExtensionsAction extends POSTAction {
 
   public List<Extension> getExtensions() {
     return extensions;
+  }
+
+  public List<Extension> getNewExtensions() {
+    return newExtensions;
   }
 
   public int getNumVocabularies() {
@@ -157,6 +163,18 @@ public class ExtensionsAction extends POSTAction {
     }
   }
 
+  @Override
+  public String save() {
+    try {
+      extensionManager.install(new URL(url));
+      addActionMessage(getText("admin.extension.install.success", new String[] {url}));
+    } catch (Exception e) {
+      log.debug(e);
+      addActionWarning(getText("admin.extension.install.error", new String[] {url}), e);
+    }
+    return SUCCESS;
+  }
+
   public void setDateFormat(String dateFormat) {
     this.dateFormat = dateFormat;
   }
@@ -165,6 +183,10 @@ public class ExtensionsAction extends POSTAction {
     if (StringUtils.trimToNull(x) != null) {
       this.updateVocabs = true;
     }
+  }
+
+  public void setUrl(String url) {
+    this.url = url;
   }
 
 }
