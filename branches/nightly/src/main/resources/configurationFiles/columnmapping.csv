@@ -158,7 +158,7 @@
 "Estado Nomenclatural","Nomenclatural Status","nomenclaturalStatus","optional"
 "Comentarios del Taxón","Taxon Remarks","taxonRemarks","optional"
 "ID de la Relación del Recurso","Resource Relationship ID","resourceRelationshipID","optional"
-"ID del Recurso","","","optional"
+"ID del Recurso","Resource ID","resourceID","optional"
 "ID del Recurso Relacionado","Related Resource ID","relatedResourceID","optional"
 "Relación del Recurso","Relationship Of Resource","relationshipOfResource","optional"
 "Relación de Acuerdo con","Relationship According To","relationshipAccordingTo","optional"
