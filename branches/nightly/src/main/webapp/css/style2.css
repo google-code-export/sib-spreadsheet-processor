@@ -6,20 +6,22 @@
 	-o-transition: all 0.4s ease;
 }
 body {
-	background-color: #2A313A;
-	background-image: -moz-linear-gradient(top, #313944, #20252C);
-	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#313944), to(#20252C));
-	background-image: -webkit-linear-gradient(top, #313944, #20252C);
-	background-image: -o-linear-gradient(top, #313944, #20252C);
-	background-image: linear-gradient(to bottom, #313944, #20252C);
-	background-repeat: repeat-x;
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff313944', endColorstr='#ff20252c', GradientType=0);
+	background-color: white;
+	color: #333;
+	background-image: url(../images/leaves_top.jpg), url(../images/_leaves_bottom.jpg), url(../images/bg_azul_2.jpg);
+	background-repeat: repeat-x, repeat-x, repeat;
+	background-position: center top, bottom left, left top;
 	margin: 0;
 	/*font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;*/
 	font-family: "Open Sans",sans-serif;
 	font-size: 14px;
 	line-height: 20px;
-	color: #333;
+}
+.navbar-inner {
+	background-color: white;
+	background-image: url(../images/leaves_top3.jpg), url(../images/_leaves_bottom.jpg), url(../images/bg_azul_2.jpg);
+	background-repeat: repeat-x, repeat-x, repeat;
+	background-position: center top, bottom left, left top;
 }
 .navbar .brand {
 	padding: 5px 20px 5px;
@@ -50,7 +52,7 @@ body {
 	padding-bottom: 15px;
 	padding-left: 20px;
 	padding-right: 20px;
-	background-color: white;
+	background: rgba(255, 255, 255, 0.4);
 }
 .content-inner::before, .content-inner::after {
 	display: table;
@@ -74,7 +76,7 @@ body {
 	line-height: 40px;
 }
 .content-full-witdh {
-	background-color: white;
+	background: rgba(255, 255, 255, 0.4);
 	width: 100% !important;
 }
 .btn-variacion {

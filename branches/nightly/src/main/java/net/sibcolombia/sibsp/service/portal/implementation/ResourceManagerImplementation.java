@@ -347,35 +347,39 @@ public class ResourceManagerImplementation extends BaseManager implements Resour
     eml.setHierarchyLevel(readCellValue(sheet.getRow(5).getCell(1)));
     eml.setLogoUrl(readCellValue(sheet.getRow(7).getCell(1)));
     try {
-      if (readCellValue(sheet.getRow(5).getCell(4)).matches("\\d{4}-\\d{2}-\\d{2}")) {
-        eml.setPubDate(dateFormatB.parse(readCellValue(sheet.getRow(5).getCell(4))));
-      } else if (readCellValue(sheet.getRow(5).getCell(4)).matches("\\d{2}/\\d{2}/\\d{4}")) {
-        eml.setPubDate(dateFormatA.parse(readCellValue(sheet.getRow(5).getCell(4))));
-      } else {
-        throw new InvalidFormatException("Error al procesar fecha inicial y final en cobertura temporal: ");
+      if (!readCellValue(sheet.getRow(5).getCell(4)).isEmpty()) {
+        if (readCellValue(sheet.getRow(5).getCell(4)).matches("\\d{4}-\\d{2}-\\d{2}")) {
+          eml.setPubDate(dateFormatB.parse(readCellValue(sheet.getRow(5).getCell(4))));
+        } else if (readCellValue(sheet.getRow(5).getCell(4)).matches("\\d{2}/\\d{2}/\\d{4}")) {
+          eml.setPubDate(dateFormatA.parse(readCellValue(sheet.getRow(5).getCell(4))));
+        } else {
+          throw new InvalidFormatException("Error al procesar fecha publicación en metadatos adicionales");
+        }
       }
     } catch (ParseException e) {
-      throw new InvalidFormatException("Error al procesar fecha inicial y final en cobertura temporal: " + e);
+      throw new InvalidFormatException("Error al procesar fecha publicación en metadatos adicionales: " + e);
     }
     eml.setPurpose(readCellValue(sheet.getRow(9).getCell(1)));
-    switch (readCellValue(sheet.getRow(11).getCell(1))) {
-      case "Ningúna licencia seleccionada":
-        eml.setIntellectualRights(readCellValue(sheet.getRow(12).getCell(1)));
-        break;
-      case "Creative Commons CCZero":
-        eml.setIntellectualRights(baseAction.getText("eml.intellectualRights.license.cczero.text"));
-        break;
-      case "Open Data Commons Public Domain Dedication and Licence (PDDL)":
-        eml.setIntellectualRights(baseAction.getText("eml.intellectualRights.license.pddl.text"));
-        break;
-      case "Open Data Commons Attribution License":
-        eml.setIntellectualRights(baseAction.getText("eml.intellectualRights.license.odcby.text"));
-        break;
-      case "Open Data Commons Open Database License (ODbL)":
-        eml.setIntellectualRights(baseAction.getText("eml.intellectualRights.license.odbl.text"));
-        break;
-      default:
-        throw new InvalidFormatException("El tipo de licencia elegida es inválida.");
+    if (!readCellValue(sheet.getRow(11).getCell(1)).isEmpty()) {
+      switch (readCellValue(sheet.getRow(11).getCell(1))) {
+        case "Ningúna licencia seleccionada":
+          eml.setIntellectualRights(readCellValue(sheet.getRow(12).getCell(1)));
+          break;
+        case "Creative Commons CCZero":
+          eml.setIntellectualRights(baseAction.getText("eml.intellectualRights.license.cczero.text"));
+          break;
+        case "Open Data Commons Public Domain Dedication and Licence (PDDL)":
+          eml.setIntellectualRights(baseAction.getText("eml.intellectualRights.license.pddl.text"));
+          break;
+        case "Open Data Commons Attribution License":
+          eml.setIntellectualRights(baseAction.getText("eml.intellectualRights.license.odcby.text"));
+          break;
+        case "Open Data Commons Open Database License (ODbL)":
+          eml.setIntellectualRights(baseAction.getText("eml.intellectualRights.license.odbl.text"));
+          break;
+        default:
+          throw new InvalidFormatException("El tipo de licencia elegida en Metadatos adicionales es inválida.");
+      }
     }
     eml.setAdditionalInfo(readCellValue(sheet.getRow(14).getCell(1)));
     List<String> alternateIdentifiers = new ArrayList<String>();
@@ -742,7 +746,7 @@ public class ResourceManagerImplementation extends BaseManager implements Resour
                 temporalCoverage.setStartDate(dateFormatA.parse(readCellValue(sheet.getRow(row.getRowNum() + 14)
                   .getCell(2))));
               } else {
-                throw new InvalidFormatException("Error al procesar fecha inicial y final en cobertura temporal: ");
+                throw new InvalidFormatException("Error al procesar fecha inicial y final en cobertura temporal");
               }
               temporalCoverages.add(temporalCoverage);
             } catch (ParseException e) {
@@ -769,7 +773,7 @@ public class ResourceManagerImplementation extends BaseManager implements Resour
                 temporalCoverage.setStartDate(dateFormatA.parse(readCellValue(sheet.getRow(row.getRowNum() + 14)
                   .getCell(2))));
               } else {
-                throw new InvalidFormatException("Error al procesar fecha inicial y final en cobertura temporal: ");
+                throw new InvalidFormatException("Error al procesar fecha inicial y final en cobertura temporal");
               }
               if (readCellValue(sheet.getRow(row.getRowNum() + 14).getCell(5)).matches("\\d{4}-\\d{2}-\\d{2}")) {
                 temporalCoverage.setEndDate(dateFormatB.parse(readCellValue(sheet.getRow(row.getRowNum() + 14).getCell(
@@ -778,7 +782,7 @@ public class ResourceManagerImplementation extends BaseManager implements Resour
                 temporalCoverage.setEndDate(dateFormatA.parse(readCellValue(sheet.getRow(row.getRowNum() + 14).getCell(
                   5))));
               } else {
-                throw new InvalidFormatException("Error al procesar fecha inicial y final en cobertura temporal: ");
+                throw new InvalidFormatException("Error al procesar fecha inicial y final en cobertura temporal");
               }
               temporalCoverages.add(temporalCoverage);
             } catch (ParseException e) {

@@ -181,8 +181,24 @@ public class CreateResourceAction extends ManagerBaseAction {
     }
   }
 
+  private boolean isCompleteOcurrenceOnly() {
+    if (onlyFileName.equalsIgnoreCase("DwC_complete_elements_template_version_1.0")) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   private boolean isEmlOnly() {
     if (onlyFileName.equalsIgnoreCase("GMP_template_version_1.0")) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  private boolean isTaxonomicOnly() {
+    if (onlyFileName.equalsIgnoreCase("DwC_taxonomic_list_template_version_1.0")) {
       return true;
     } else {
       return false;
@@ -233,6 +249,8 @@ public class CreateResourceAction extends ManagerBaseAction {
       File tmpFile = uploadToTmp();
       File dataFileElements = null;
       if (tmpFile != null) {
+        Source source = null;
+        Extension extension = new Extension();
         if (isEmlOnly()) {
           // Process template with metadata only workbook
           UUID uniqueID = UUID.randomUUID();
@@ -241,16 +259,29 @@ public class CreateResourceAction extends ManagerBaseAction {
           saveResource();
           this.resourceManager.saveEml(this.resource);
           tmpFile.delete();
-        } else if (isBasicOcurrenceOnly()) {
+        } else if (isBasicOcurrenceOnly() || isTaxonomicOnly() || isCompleteOcurrenceOnly()) {
           UUID uniqueID = UUID.randomUUID();
           this.resource = resourceManager.processMetadataSpreadsheetPart(tmpFile, fileFileName, actionLogger);
           this.resource.setUniqueID(uniqueID);
-          dataFileElements = excelToCsvConverter.convertExcelToCsv(resource, tmpFile, actionLogger);
-          Source source = sourceManager.add(this.resource, dataFileElements, fileFileName);
-          this.resource.addSource(source, true);
-          saveResource();
-
-          Extension extension = extensionManager.get(Constants.DWC_ROWTYPE_OCCURRENCE);
+          if (isBasicOcurrenceOnly()) {
+            dataFileElements = excelToCsvConverter.convertExcelCoreBasicToCsv(resource, tmpFile, actionLogger);
+            source = sourceManager.add(this.resource, dataFileElements, fileFileName);
+            this.resource.addSource(source, true);
+            saveResource();
+            extension = extensionManager.get(Constants.DWC_ROWTYPE_OCCURRENCE);
+          } else if (isTaxonomicOnly()) {
+            dataFileElements = excelToCsvConverter.convertExcelTaxonomicToCsv(resource, tmpFile, actionLogger);
+            source = sourceManager.add(this.resource, dataFileElements, fileFileName);
+            this.resource.addSource(source, true);
+            saveResource();
+            extension = extensionManager.get(Constants.DWC_ROWTYPE_TAXON);
+          } else if (isCompleteOcurrenceOnly()) {
+            dataFileElements = excelToCsvConverter.convertExcelCoreCompleteToCsv(resource, tmpFile, actionLogger);
+            source = sourceManager.add(this.resource, dataFileElements, fileFileName);
+            this.resource.addSource(source, true);
+            saveResource();
+            extension = extensionManager.get(Constants.DWC_ROWTYPE_OCCURRENCE);
+          }
           if (extension != null) {
             mapping = new ExtensionMapping();
             mapping.setExtension(extension);
@@ -329,8 +360,6 @@ public class CreateResourceAction extends ManagerBaseAction {
               new String[] {Integer.toString(resource.getEmlVersion())}));
           }
           tmpFile.delete();
-        } else {
-          // Process template with metadata and taxonomy file
         }
 
         // resourceManager.create(tmpFile, fileFileName, onlyFileName, onlyFileExtension, this);
@@ -504,8 +533,11 @@ public class CreateResourceAction extends ManagerBaseAction {
     } else {
       if (onlyFileName.equalsIgnoreCase("GMP_template_version_1.0")) {
         return true;
-      }
-      if (onlyFileName.equalsIgnoreCase("DwC_min_elements_template_version_1.0")) {
+      } else if (onlyFileName.equalsIgnoreCase("DwC_min_elements_template_version_1.0")) {
+        return true;
+      } else if (onlyFileName.equalsIgnoreCase("DwC_complete_elements_template_version_1.0")) {
+        return true;
+      } else if (onlyFileName.equalsIgnoreCase("DwC_taxonomic_list_template_version_1.0")) {
         return true;
       } else {
         return false;

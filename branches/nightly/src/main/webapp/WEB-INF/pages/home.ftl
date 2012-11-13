@@ -11,19 +11,27 @@
 		
 					<ol>
 						<li>[@s.text name="sibsp.application.firststep"/]</li>
-						<li>Download and complete the template according to workbook instructions</li>
-						<li>Click "Select file" button to upload the completed spreadsheet file</li>
-						<li>Receive and save a validated DwCA (Darwin Core Archive File) or EML metadata document</li>
+						<li>[@s.text name="sibsp.application.secondstep"/]</li>
+						<li>[@s.text name="sibsp.application.thirdstep"/]</li>
+						<li>[@s.text name="sibsp.application.fourthstep"/]</li>
 					</ol>
 					<hr/>
-					<h3>Available templates</h3>
+					<h3>[@s.text name="sibsp.application.templateslist.title"/]</h3>
 					<dl class="dl-horizontal">
-						<dt>Metadata file</dt>
-						<dd>This template describe a database or other data resource. Processor output is an Ecological Metadata Language Document (EML) that conforms to a GBIF (GMP) metadata profile. <a class="btn btn-success btn-variacion" href="/sib-spreadsheet-processor/templates/GMP_template_version_1.0.xls"><i class="icon-download-alt"></i>Download (Excel 97-2003)</a><a class="btn btn-success btn-variacion" href="/sib-spreadsheet-processor/templates/GMP_template_version_1.0.xlsx"><i class="icon-download-alt"></i>Download (Excel 2007-2013)</a></dd>
+						<dt>[@s.text name="sibsp.application.metadatafile.name"/]</dt>
+						<dd>[@s.text name="sibsp.application.metadatafile.description"/]<br/> <a class="btn btn-success btn-variacion" href="${rootURL}/templates/GMP_template_version_1.0.xls"><i class="icon-download-alt"></i>[@s.text name="button.download"/] (Excel 97-2003)</a><a class="btn btn-success btn-variacion" href="${rootURL}/templates/GMP_template_version_1.0.xlsx"><i class="icon-download-alt"></i>[@s.text name="button.download"/] (Excel 2007-2013)</a></dd>
 					</dl>
 					<dl class="dl-horizontal">
-						<dt>Species ocurrence</dt>
-						<dd>Use this template to record or store basic species collections or observational data.<a class="btn btn-success btn-variacion" href="/sib-spreadsheet-processor/templates/DwC_min_elements_template_version_1.0.xls"><i class="icon-download-alt"></i>Download (Excel 97-2003)</a><a class="btn btn-success btn-variacion" href="/sib-spreadsheet-processor/templates/DwC_min_elements_template_version_1.0.xlsx"><i class="icon-download-alt"></i>Download (Excel 2007-2013)</a></dd>
+						<dt>[@s.text name="sibsp.application.ocurrence.name"/]<br/><span class="type-element">[@s.text name="sibsp.application.ocurrence.type.basic"/]</span></dt>
+						<dd>[@s.text name="sibsp.application.ocurrence.minimal.description"/]<br/> <a class="btn btn-success btn-variacion" href="${rootURL}/templates/DwC_min_elements_template_version_1.0.xls"><i class="icon-download-alt"></i>[@s.text name="button.download"/] (Excel 97-2003)</a><a class="btn btn-success btn-variacion" href="${rootURL}/templates/DwC_min_elements_template_version_1.0.xlsx"><i class="icon-download-alt"></i>[@s.text name="button.download"/] (Excel 2007-2013)</a></dd>
+					</dl>
+					<dl class="dl-horizontal">
+						<dt>[@s.text name="sibsp.application.ocurrence.name"/]<br/><span class="type-element">[@s.text name="sibsp.application.ocurrence.type.complete"/]</span></dt>
+						<dd>[@s.text name="sibsp.application.ocurrence.complete.description"/]<br/> <a class="btn btn-success btn-variacion" href="${rootURL}/templates/DwC_complete_elements_template_version_1.0.xls"><i class="icon-download-alt"></i>[@s.text name="button.download"/] (Excel 97-2003)</a><a class="btn btn-success btn-variacion" href="${rootURL}/templates/DwC_complete_elements_template_version_1.0.xlsx"><i class="icon-download-alt"></i>[@s.text name="button.download"/] (Excel 2007-2013)</a></dd>
+					</dl>
+					<dl class="dl-horizontal">
+						<dt>[@s.text name="sibsp.application.taxonomic.name"/]</dt>
+						<dd>[@s.text name="sibsp.application.taxonomic.description"/]<br/> <a class="btn btn-success btn-variacion" href="${rootURL}/templates/DwC_taxonomic_list_template_version_1.0.xls"><i class="icon-download-alt"></i>[@s.text name="button.download"/] (Excel 97-2003)</a><a class="btn btn-success btn-variacion" href="${rootURL}/templates/DwC_taxonomic_list_template_version_1.0.xlsx"><i class="icon-download-alt"></i>[@s.text name="button.download"/] (Excel 2007-2013)</a></dd>
 					</dl>
 				</div>	
 			</div>

@@ -1,0 +1,7 @@
+"ID de la Relación del Recurso","Resource Relationship ID","resourceRelationshipID","optional"
+"ID del Recurso","Resource ID","resourceID","optional"
+"ID del Recurso Relacionado","Related Resource ID","relatedResourceID","optional"
+"Relación del Recurso","Relationship Of Resource","relationshipOfResource","optional"
+"Relación de Acuerdo con","Relationship According To","relationshipAccordingTo","optional"
+"Fecha de Establecimiento de la Relación","Relationship Established Date","relationshipEstablishedDate","optional"
+"Comentarios de la Relación","Relationship Remarks","relationshipRemarks","optional"
