@@ -22,6 +22,12 @@ public final class Constants {
   public static final String VOCAB_URI_PRESERVATION_METHOD = "http://rs.gbif.org/vocabulary/gbif/preservation_method";
   public static final String VOCAB_URI_DATASET_SUBTYPES = "http://rs.gbif.org/vocabulary/gbif/datasetSubtype";
   public static final String DEPRECATED_VOCAB_URI_RESOURCE_TYPE = "http://rs.gbif.org/vocabulary/gbif/resource_type";
+  public static final String DWC_CORE_OCURRENCE_COLUMN_MAPPING_FILE = "columncoreocurrencemapping.csv";
+  public static final String DWC_CORE_TAXONOMIC_COLUMN_MAPPING_FILE = "columncoretaxonmapping.csv";
+  public static final String DWC_EXTENSION_RESOURCE_RELATIONSHIP_COLUMN_MAPPING_FILE =
+    "columnextensionresourcerelationshipmapping.csv";
+  public static final String DWC_EXTENSION_MEASUREMENT_OR_FACTS_COLUMN_MAPPING_FILE =
+    "columnextensionmeasurementorfactsmapping.csv";
   public static final String DEPRECATED_VOCAB_URL_RESOLVABLE_RESOURCE_TYPE =
     "http_rs_gbif_org_vocabulary_gbif_resource_type_xml.vocab";
   public static final String[] IMAGE_TYPES = {"jpeg", "gif", "png"};

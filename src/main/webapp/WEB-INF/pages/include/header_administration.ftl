@@ -18,7 +18,7 @@
       }
     </style>
     <link href="/sib-spreadsheet-processor/css/bootstrap-responsive.css" rel="stylesheet">
-    <link href="/sib-spreadsheet-processor/css/style.css" rel="stylesheet">
+    <link href="/sib-spreadsheet-processor/css/style2.css" rel="stylesheet">
 
     <!-- Code for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>

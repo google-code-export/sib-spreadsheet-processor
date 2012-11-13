@@ -18,7 +18,7 @@
       }
     </style>
     <link href="${rootURL}/css/bootstrap-responsive.css" rel="stylesheet">
-    <link href="${rootURL}/css/style.css" rel="stylesheet">
+    <link href="${rootURL}/css/style2.css" rel="stylesheet">
 
     <!-- Code for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
