@@ -15,6 +15,7 @@ import java.net.UnknownHostException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.sibcolombia.sibsp.interfaces.ConfigurationManager;
+import net.sibcolombia.sibsp.scheduler.SchedulerJob;
 import net.sibcolombia.sibsp.service.BaseManager;
 import net.sibcolombia.sibsp.service.InvalidConfigException;
 import net.sibcolombia.sibsp.service.InvalidConfigException.TYPE;
@@ -30,6 +31,15 @@ import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
+import org.quartz.CronScheduleBuilder;
+import org.quartz.JobBuilder;
+import org.quartz.JobDetail;
+import org.quartz.JobKey;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.Trigger;
+import org.quartz.TriggerBuilder;
+import org.quartz.impl.StdSchedulerFactory;
 
 @Singleton
 public class ConfigurationManagerImplementation extends BaseManager implements ConfigurationManager {
@@ -111,7 +121,29 @@ public class ConfigurationManagerImplementation extends BaseManager implements C
 
   @Override
   public boolean configurationComplete() {
+    if (dataDir.isConfigured()) {
+      createFolderCleaningJob();
+    }
     return dataDir.isConfigured();
+  }
+
+  private void createFolderCleaningJob() {
+    try {
+      Scheduler scheduler = new StdSchedulerFactory().getScheduler();
+      JobDetail currentJob = scheduler.getJobDetail(new JobKey("folderCleaning", "group1"));
+      if (currentJob == null) {
+        JobDetail job = JobBuilder.newJob(SchedulerJob.class).withIdentity("folderCleaning", "group1").build();
+        job.getJobDataMap().put("setupFolder", this.dataDir);
+        Trigger trigger =
+          TriggerBuilder.newTrigger().withIdentity("folderCleaningTrigger", "group1")
+            .withSchedule(CronScheduleBuilder.cronSchedule(config.getProperty("defaultCronExpression"))).build();
+        scheduler.start();
+        scheduler.scheduleJob(job, trigger);
+      }
+    } catch (SchedulerException e) {
+      e.printStackTrace();
+    }
+
   }
 
   /**

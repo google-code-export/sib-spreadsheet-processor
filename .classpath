@@ -65,5 +65,7 @@
 	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/itext-rtf-2.1.7.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jre7"/>
 	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/opencsv-2.3.jar"/>
+	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/c3p0-0.9.1.1.jar"/>
+	<classpathentry kind="lib" path="target/sib-spreadsheet-processor/WEB-INF/lib/quartz-2.1.6.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
