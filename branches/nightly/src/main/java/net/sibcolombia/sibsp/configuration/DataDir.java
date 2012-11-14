@@ -8,6 +8,8 @@ import java.io.InputStream;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
 
 import com.google.inject.Singleton;
 import net.sibcolombia.sibsp.model.Resource;
@@ -19,20 +21,21 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 @Singleton
-public class DataDir {
+public class DataDir implements ServletContextListener {
 
   public static final String CONFIG_DIR = "config";
   public static final String RESOURCES_DIR = "resources";
+
   public static final String TMP_DIR = "temp";
+
   public static final String LOGGING_DIR = "logs";
   public static final String EML_XML_FILENAME = "eml.xml";
-
   private static Logger log = Logger.getLogger(DataDir.class);
 
   protected File dataDir;
+
   private File dataDirSettingFile;
   private final InputStreamUtils streamUtils = new InputStreamUtils();
-
   private int tmpCounter = 0;
 
   private DataDir() {
@@ -62,6 +65,13 @@ public class DataDir {
     return dataDirectory;
   }
 
+  /**
+   * @return the resourcesDir
+   */
+  public static String getResourcesDir() {
+    return RESOURCES_DIR;
+  }
+
   private void assureDirExists(File f) {
     if (f != null && !f.exists()) {
       f.mkdirs();
@@ -88,6 +98,18 @@ public class DataDir {
    */
   public File configFile(String path) {
     return dataFile(CONFIG_DIR + "/" + path);
+  }
+
+  @Override
+  public void contextDestroyed(ServletContextEvent arg0) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void contextInitialized(ServletContextEvent arg0) {
+    // TODO Auto-generated method stub
+
   }
 
   private void createDefaultDir() throws IOException {

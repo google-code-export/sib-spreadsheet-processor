@@ -58,6 +58,7 @@ public class ConfigurationAction extends BaseAction {
     return dataDirPath;
   }
 
+
   @Override
   public String getRootURL() {
     // try to detect default values if not yet configured
@@ -78,7 +79,6 @@ public class ConfigurationAction extends BaseAction {
   public void setDataDirPath(String dataDirPath) {
     this.dataDirPath = dataDirPath;
   }
-
 
   /**
    * This method is used to configure SIBSP for the first time.
