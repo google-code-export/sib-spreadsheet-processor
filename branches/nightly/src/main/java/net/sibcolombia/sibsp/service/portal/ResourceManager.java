@@ -41,6 +41,38 @@ public interface ResourceManager {
   void delete(Resource resource) throws IOException;
 
   /**
+   * Gets a resource by its uniqueID.
+   * 
+   * @param shortname Resource uniqueID
+   * @return Resource, or null if none was found for this shortName
+   */
+  Resource get(String shortname);
+
+  /**
+   * Return the size of the generated DwC-A file.
+   * 
+   * @param resource Resource
+   * @return size of DwC-A file
+   */
+  long getDwcaSize(Resource resource);
+
+  /**
+   * Return the size of the generated EML file.
+   * 
+   * @param resource Resource
+   * @return size of EML file
+   */
+  long getEmlSize(Resource resource);
+
+  /**
+   * Returns the size of the generated RTF file.
+   * 
+   * @param resource Resource
+   * @return size of RTF file
+   */
+  long getRtfSize(Resource resource);
+
+  /**
    * Process template file to generate an EML XML file
    * 
    * @param sourceFile

@@ -229,6 +229,19 @@ public class Resource {
     return this.recordsPublished;
   }
 
+  public Source getSource(String name) {
+    if (name == null) {
+      return null;
+    }
+    name = Source.normaliseName(name);
+    for (Source s : sources) {
+      if (s.getName().equals(name)) {
+        return s;
+      }
+    }
+    return null;
+  }
+
   public List<Source> getSources() {
     List<Source> srcs = new ArrayList<Source>(sources);
     Collections.sort(srcs);

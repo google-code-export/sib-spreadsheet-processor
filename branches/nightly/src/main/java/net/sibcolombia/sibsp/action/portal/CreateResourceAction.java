@@ -3,6 +3,7 @@ package net.sibcolombia.sibsp.action.portal;
 import org.gbif.dwc.terms.ConceptTerm;
 import org.gbif.ipt.task.Xls2Csv;
 import org.gbif.ipt.utils.ActionLogger;
+import org.gbif.ipt.utils.FileUtils;
 import org.gbif.ipt.validation.ExtensionMappingValidator;
 import org.gbif.ipt.validation.ExtensionMappingValidator.ValidationStatus;
 
@@ -169,6 +170,33 @@ public class CreateResourceAction extends ManagerBaseAction {
   }
 
 
+  /**
+   * Calculate the size of the DwC-A file.
+   * 
+   * @return the size (human readable) of the DwC-A file.
+   */
+  public String getDwcaFormattedSize() {
+    return FileUtils.formatSize(resourceManager.getDwcaSize(resource), 2);
+  }
+
+  /**
+   * Calculate the size of the EML file.
+   * 
+   * @return the size (human readable) of the EML file.
+   */
+  public String getEmlFormattedSize() {
+    return FileUtils.formatSize(resourceManager.getEmlSize(resource), 2);
+  }
+
+  /**
+   * Calculate the size of the RTF file.
+   * 
+   * @return return the size (human readable) of the RTF file.
+   */
+  public String getRtfFormattedSize() {
+    return FileUtils.formatSize(resourceManager.getRtfSize(resource), 2);
+  }
+
   public String getShortname() {
     return shortname;
   }
@@ -256,9 +284,9 @@ public class CreateResourceAction extends ManagerBaseAction {
           UUID uniqueID = UUID.randomUUID();
           this.resource = resourceManager.processMetadataSpreadsheetPart(tmpFile, fileFileName, actionLogger);
           this.resource.setUniqueID(uniqueID);
+          this.resource.setLastPublished(new Date());
           saveResource();
           this.resourceManager.saveEml(this.resource);
-          tmpFile.delete();
         } else if (isBasicOcurrenceOnly() || isTaxonomicOnly() || isCompleteOcurrenceOnly()) {
           UUID uniqueID = UUID.randomUUID();
           this.resource = resourceManager.processMetadataSpreadsheetPart(tmpFile, fileFileName, actionLogger);
@@ -354,16 +382,15 @@ public class CreateResourceAction extends ManagerBaseAction {
               }
             }
           }
-
-          if (resourceManager.publish(this.resource, this)) {
-            addActionMessage(getText("sibsp.application.portal.overview.publishing.resource.version",
-              new String[] {Integer.toString(resource.getEmlVersion())}));
-          }
-          tmpFile.delete();
         }
 
+        if (resourceManager.publish(this.resource, this)) {
+          addActionMessage(getText("sibsp.application.portal.overview.publishing.resource.version",
+            new String[] {Integer.toString(resource.getEmlVersion())}));
+        }
         // resourceManager.create(tmpFile, fileFileName, onlyFileName, onlyFileExtension, this);
         log.info("File uploaded");
+        tmpFile.delete();
       } else {
         log.error("Error no file to upload");
       }
@@ -436,6 +463,7 @@ public class CreateResourceAction extends ManagerBaseAction {
     this.fileFileName = fileFileName;
   }
 
+
   public void setShortname(String shortname) {
     this.shortname = shortname;
   }
@@ -503,7 +531,6 @@ public class CreateResourceAction extends ManagerBaseAction {
       throw new InvalidFileExtension("invalid file extension");
     }
   }
-
 
   /**
    * Check if the source file is a valid spreadsheet template file extension
