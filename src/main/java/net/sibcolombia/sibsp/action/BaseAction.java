@@ -92,12 +92,6 @@ public class BaseAction extends ActionSupport implements SessionAware, Preparabl
     return config.getRootURL();
   }
 
-  public String getSopas() {
-    log.info("URL esta en: " + config.getRootURL());
-    return "hola";
-    // return config.getRootURL();
-  }
-
   public String getTextWithDynamicArgs(String key, String... args) {
     return textProvider.getText(this, key, null, args);
   }

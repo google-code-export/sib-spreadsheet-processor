@@ -16,13 +16,37 @@
 			</interceptor-ref>
 			<interceptor-ref name="portalStack"/>
 			<result name="input">/WEB-INF/pages/home.ftl</result>
-			<result name="success" type="redirectAction">
-			    <param name="actionName">home</param>
-			</result>
+			<result name="success">/WEB-INF/pages/results.ftl</result>
     	</action>
     
     	<action name="home" class="net.sibcolombia.sibsp.action.portal.HomeAction">
 			<result>/WEB-INF/pages/home.ftl</result>
+		</action>
+		
+    	<action name="archive" class="net.sibcolombia.sibsp.action.portal.ResourceFileAction" method="dwca">
+    	    <result name="success" type="stream">
+    	        <param name="contentType">${mimeType}</param>
+    	        <param name="inputName">inputStream</param>
+    	        <param name="contentDisposition">filename="${filename}"</param>
+    	        <param name="bufferSize">1024</param>
+			</result>
+		</action>
+		<action name="eml" class="net.sibcolombia.sibsp.action.portal.ResourceFileAction" method="eml">
+		    <result name="success" type="stream">
+		        <param name="contentType">${mimeType}</param>
+		        <param name="contentCharSet">UTF-8</param>
+		        <param name="inputName">inputStream</param>
+		        <param name="contentDisposition">filename="${filename}"</param>
+		        <param name="bufferSize">1024</param>
+			</result>
+		</action>
+		<action name="rtf" class="net.sibcolombia.sibsp.action.portal.ResourceFileAction" method="rtf">
+		    <result name="success" type="stream">
+		        <param name="contentType">${mimeType}</param>
+		        <param name="inputName">inputStream</param>
+		        <param name="contentDisposition">filename="${filename}"</param>
+		        <param name="bufferSize">1024</param>
+		 	</result>
 		</action>
 		
 	</package>

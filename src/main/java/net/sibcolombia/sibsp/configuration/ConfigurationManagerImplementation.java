@@ -166,8 +166,8 @@ public class ConfigurationManagerImplementation extends BaseManager implements C
     log.info("Loading SiB-SP config ...");
     config.loadConfigurationSettings();
 
-    // log.info("Reloading log4j settings ...");
-    // reloadLogger();
+    log.info("Reloading log4j settings ...");
+    reloadLogger();
 
     log.info("Loading vocabularies ...");
     vocabularyManager.load();

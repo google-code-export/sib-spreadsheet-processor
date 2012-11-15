@@ -159,11 +159,30 @@ public class ResourceManagerImplementation extends BaseManager implements Resour
     worker.report();
   }
 
+  @Override
   public Resource get(String shortname) {
     if (shortname == null) {
       return null;
     }
     return resources.get(shortname.toLowerCase());
+  }
+
+  @Override
+  public long getDwcaSize(Resource resource) {
+    File data = dataDir.resourceDwcaFile(resource.getUniqueID().toString());
+    return data.length();
+  }
+
+  @Override
+  public long getEmlSize(Resource resource) {
+    File data = dataDir.resourceEmlFile(resource.getUniqueID().toString(), resource.getEmlVersion());
+    return data.length();
+  }
+
+  @Override
+  public long getRtfSize(Resource resource) {
+    File data = dataDir.resourceRtfFile(resource.getUniqueID().toString());
+    return data.length();
   }
 
   /**
@@ -198,6 +217,22 @@ public class ResourceManagerImplementation extends BaseManager implements Resour
       // is listed as locked but task might be finished, check
       Future<Integer> f = processFutures.get(shortname);
       if (f.isDone()) {
+        try {
+          Integer coreRecords = f.get();
+          Resource res = get(shortname);
+          res.setRecordsPublished(coreRecords);
+          save(res);
+          return false;
+        } catch (InterruptedException e) {
+          log.info("Process interrupted for resource " + shortname);
+        } catch (CancellationException e) {
+          log.info("Process canceled for resource " + shortname);
+        } catch (ExecutionException e) {
+          log.error("Process for resource " + shortname + " aborted due to error: " + e.getMessage());
+        } finally {
+          processFutures.remove(shortname);
+        }
+      } else {
         try {
           Integer coreRecords = f.get();
           Resource res = get(shortname);
@@ -256,6 +291,12 @@ public class ResourceManagerImplementation extends BaseManager implements Resour
 
   @Override
   public boolean publish(Resource resource, BaseAction action) throws PublicationException {
+    // check if publishing task is already running
+    if (isLocked(resource.getUniqueID().toString())) {
+      throw new PublicationException(PublicationException.TYPE.LOCKED, "Resource " + resource.getUniqueID()
+        + " is currently locked by another process");
+    }
+
     // update eml pubDate (represents date when the resource was last published)
     resource.getEml().setPubDate(new Date());
 
@@ -268,6 +309,7 @@ public class ResourceManagerImplementation extends BaseManager implements Resour
     if (resource.hasMappedData()) {
       generateDwca(resource);
       dwca = true;
+      isLocked(resource.getUniqueID().toString());
     } else {
       resource.setRecordsPublished(0);
     }
