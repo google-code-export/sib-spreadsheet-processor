@@ -7,7 +7,7 @@
 			<div class="content content-full-witdh">    	
 				<div class="content-inner">
     				<h2>[@s.text name="sibsp.application.results.title"/]</h2>
-					<h4>Thanks for using SiB Spreadsheet Processor.</h3>
+					<h4>[@s.text name="sibsp.application.results.textoagradecimiento"/]</h3>
 		
 					<p>[@s.text name="sibsp.application.results.overview"/]</p>
 
