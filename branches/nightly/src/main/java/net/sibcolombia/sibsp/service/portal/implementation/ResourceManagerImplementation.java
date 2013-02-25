@@ -495,7 +495,7 @@ public class ResourceManagerImplementation extends BaseManager implements Resour
     address.setCity(readCellValue(sheet.getRow(37).getCell(4)));
     address.setProvince(readCellValue(sheet.getRow(39).getCell(1)));
     address.setCountry(readCellValue(sheet.getRow(39).getCell(4)));
-    address.setPostalCode(String.valueOf(Math.round(sheet.getRow(41).getCell(1).getNumericCellValue())));
+    address.setPostalCode(readCellValue(sheet.getRow(41).getCell(1)));
     agent.setAddress(address);
     eml.setResourceCreator(agent);
 
